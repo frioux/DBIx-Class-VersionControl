@@ -25,6 +25,7 @@ __PACKAGE__->add_columns(
 
 
 __PACKAGE__->set_primary_key('ID');
+__PACKAGE__->add_unique_constraint('setorder', [ qw/changeset_id order_in/ ]);
 __PACKAGE__->belongs_to('changeset', 'DBIx::Class::Schema::Journal::DB::ChangeSet', 'changeset_id');
 
 __PACKAGE__->position_column('order_in');

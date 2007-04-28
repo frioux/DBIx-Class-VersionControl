@@ -2,7 +2,10 @@ package DBIx::Class::Schema::Journal;
 
 use base qw/DBIx::Class/;
 
-__PACKAGE__->mk_classdata('journal_dsn');
+use Scalar::Util 'blessed';
+
+__PACKAGE__->mk_classdata('journal_storage_type');
+__PACKAGE__->mk_classdata('journal_connection');
 __PACKAGE__->mk_classdata('journal_sources'); ## [ source names ]
 __PACKAGE__->mk_classdata('journal_user'); ## [ class, field for user id ]
 __PACKAGE__->mk_classdata('_journal_schema');
@@ -12,7 +15,14 @@ sub load_classes
     my $self = shift;
     $self->next::method(@_);
 
-    $self->_journal_schema((__PACKAGE__ . '::DB')->connect($self->journal_dsn || $self->storage->connect_info));
+    my $journal_schema = (__PACKAGE__ . '::DB')->connect($self->journal_connection || $self->storage->connect_info);
+    if($self->journal_storage_type)
+    {
+        $journal_schema->storage_type($self->journal_storage_type);
+    }
+
+    ## get our own private version of the journaling sources
+    $self->_journal_schema($journal_schema->compose_namespace(blessed($self) . '::Journal'));
 
     my %j_sources = @{$self->journal_sources} ? map { $_ => 1 } @{$self->journal_sources} : map { $_ => 1 } $self->sources;
     foreach my $s_name ($self->sources)
@@ -28,6 +38,8 @@ sub load_classes
         return;
     }
 
+    ## get our own private version of the journaling sources
+    $self->_journal_schema->compose_namespace(blessed($self) . '::Journal');
     DBIx::Class::Schema::Journal::DB::ChangeSet->belongs_to('user', @{$self->journal_user});
 }
 
@@ -35,14 +47,14 @@ sub get_audit_log_class_name
 {
     my ($self, $sourcename) = @_;
 
-    return __PACKAGE__ . "::DB::${sourcename}AuditLog";
+    return blessed($self->_journal_schema) . "::${sourcename}AuditLog";
 }
 
 sub get_audit_history_class_name
 {
     my ($self, $sourcename) = @_;
 
-    return __PACKAGE__ . "::DB::${sourcename}AuditHistory";
+    return blessed($self->_journal_schema) . "::${sourcename}AuditHistory";
 }
 
 sub create_journal_for
@@ -51,38 +63,16 @@ sub create_journal_for
 
     my $source = $self->source($s_name);
     my $newclass = $self->get_audit_log_class_name($s_name);
-    DBIx::Class::Componentised->inject_base($newclass, 'DBIx::Class');
-    $newclass->load_components('Core');
+    DBIx::Class::Componentised->inject_base($newclass, 'DBIx::Class::Schema::Journal::DB::AuditLog');
     $newclass->table(lc($s_name) . "_audit_log");
-    $newclass->add_columns(
-                           ID => {
-                               data_type => 'integer',
-                               is_nullable => 0,
-                           },
-                           create_id => {
-                               data_type => 'integer',
-                               is_nullable => 0,
-                           },
-                           delete_id => {
-                               data_type => 'integer',
-                               is_nullable => 1,
-                           });
-    $newclass->belongs_to('created', 'DBIx::Class::Schema::Journal::DB::Change', 'create_id');
-    $newclass->belongs_to('deleted', 'DBIx::Class::Schema::Journal::DB::Change', 'delete_id');
                            
 
     my $histclass = $self->get_audit_hisory_class_name($s_name);
-    DBIx::Class::Componentised->inject_base($histclass, 'DBIx::Class');
-    $histclass->load_components('Core');
+    DBIx::Class::Componentised->inject_base($histclass, 'DBIx::Class::Schema::Journal::DB::AuditHistory');
     $histclass->table(lc($s_name) . "_audit_hisory");
     $histclass->add_columns(
-                           change_id => {
-                               data_type => 'integer',
-                               is_nullable => 0,
-                           },
                             map { $_ => $source->column_info($_) } $source->columns
                            );
-    $histclass->belongs_to('change', 'DBIx::Class::Schema::Journal::DB::Change', 'change_id');
                            
 }
 
