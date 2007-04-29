@@ -24,11 +24,13 @@ sub load_classes
     ## get our own private version of the journaling sources
     $self->_journal_schema($journal_schema->compose_namespace(blessed($self) . '::Journal'));
 
+    ## Create auditlog+history per table
     my %j_sources = @{$self->journal_sources} ? map { $_ => 1 } @{$self->journal_sources} : map { $_ => 1 } $self->sources;
     foreach my $s_name ($self->sources)
     {
         next unless($j_sources{$s_name});
         $self->create_journal_for($s_name);
+        $self->source($s_name)->load_component('Journal');
     }
 
     ## Set up relationship between changeset->user_id and this schema's user
@@ -38,9 +40,7 @@ sub load_classes
         return;
     }
 
-    ## get our own private version of the journaling sources
-    $self->_journal_schema->compose_namespace(blessed($self) . '::Journal');
-    DBIx::Class::Schema::Journal::DB::ChangeSet->belongs_to('user', @{$self->journal_user});
+    $self->_journal_schema->source('ChangeSet')->belongs_to('user', @{$self->journal_user});
 }
 
 sub get_audit_log_class_name
@@ -74,6 +74,21 @@ sub create_journal_for
                             map { $_ => $source->column_info($_) } $source->columns
                            );
                            
+}
+
+sub create_changeset
+{
+    my ($self, $code) = @_;
+
+    ## Create a new changeset, then run $code as a transaction
+    my $cs = $self->result_source->schema->_journal_schema->resultset('ChangeSet');
+    my $changeset = $cs->create({
+        user_id => $self->result_source->schema->_journal_schema->current_user(),
+        session_id => $self->result_source->schema->_journal_schema->current_session(),
+    });
+    $self->result_source->schema->_journal_schema->current_changeset($changeset->ID);
+
+    $self->txn_do($code);
 }
 
 1;
