@@ -10,7 +10,7 @@ sub new
 
     $class->result_source->schema->_journal_schema->current_user(delete $attrs->{user_id});
 
-    $self->next::method($attrs, @rest);
+    $class->next::method($attrs, @rest);
 }
 
 sub insert
@@ -26,6 +26,7 @@ sub insert
         $al->create({
             changeset => $self->result_source->schema->_journal_schema->current_changeset(),
         });
+    }
 }
 
 ## On delete, update delete_id of AuditLog

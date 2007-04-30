@@ -3,6 +3,7 @@ package DBIx::Class::Schema::Journal;
 use base qw/DBIx::Class/;
 
 use Scalar::Util 'blessed';
+use DBIx::Class::Schema::Journal::DB;
 
 __PACKAGE__->mk_classdata('journal_storage_type');
 __PACKAGE__->mk_classdata('journal_connection');
@@ -10,7 +11,7 @@ __PACKAGE__->mk_classdata('journal_sources'); ## [ source names ]
 __PACKAGE__->mk_classdata('journal_user'); ## [ class, field for user id ]
 __PACKAGE__->mk_classdata('_journal_schema');
 
-sub load_classes
+sub connection
 {
     my $self = shift;
     $self->next::method(@_);
@@ -64,12 +65,13 @@ sub create_journal_for
     my $source = $self->source($s_name);
     my $newclass = $self->get_audit_log_class_name($s_name);
     DBIx::Class::Componentised->inject_base($newclass, 'DBIx::Class::Schema::Journal::DB::AuditLog');
-    $newclass->table(lc($s_name) . "_audit_log");
+#    $newclass->table(lc($s_name) . "_audit_log");
+    $newclass->result_source_instance->name(lc($s_name) . "_audit_log");
                            
 
     my $histclass = $self->get_audit_hisory_class_name($s_name);
     DBIx::Class::Componentised->inject_base($histclass, 'DBIx::Class::Schema::Journal::DB::AuditHistory');
-    $histclass->table(lc($s_name) . "_audit_hisory");
+    $histclass->result_source_instance->name(lc($s_name) . "_audit_hisory");
     $histclass->add_columns(
                             map { $_ => $source->column_info($_) } $source->columns
                            );
