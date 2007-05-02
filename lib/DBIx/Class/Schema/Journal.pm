@@ -16,7 +16,8 @@ sub connection
     my $self = shift;
     $self->next::method(@_);
 
-    my $journal_schema = (__PACKAGE__ . '::DB')->connect($self->journal_connection || $self->storage->connect_info);
+    my $journal_schema = DBIx::Class::Schema::Journal::DB->connect(@{ $self->journal_connection || $self->storage->connect_info });
+    print STDERR "conn", $journal_schema->storage->connect_info;
     if($self->journal_storage_type)
     {
         $journal_schema->storage_type($self->journal_storage_type);
@@ -31,7 +32,8 @@ sub connection
     {
         next unless($j_sources{$s_name});
         $self->create_journal_for($s_name);
-        $self->source($s_name)->load_component('Journal');
+        $self->class($s_name)->load_components('Journal');
+        print STDERR "$s_name :", $self->class($s_name), "\n";
     }
 
     ## Set up relationship between changeset->user_id and this schema's user
@@ -41,7 +43,7 @@ sub connection
         return;
     }
 
-    $self->_journal_schema->source('ChangeSet')->belongs_to('user', @{$self->journal_user});
+    $self->_journal_schema->class('ChangeSet')->belongs_to('user', @{$self->journal_user});
 }
 
 sub get_audit_log_class_name
@@ -65,17 +67,19 @@ sub create_journal_for
     my $source = $self->source($s_name);
     my $newclass = $self->get_audit_log_class_name($s_name);
     DBIx::Class::Componentised->inject_base($newclass, 'DBIx::Class::Schema::Journal::DB::AuditLog');
-#    $newclass->table(lc($s_name) . "_audit_log");
-    $newclass->result_source_instance->name(lc($s_name) . "_audit_log");
+    $newclass->table(lc($s_name) . "_audit_log");
+    $self->_journal_schema->register_class("${s_name}AuditLog", $newclass);
                            
 
-    my $histclass = $self->get_audit_hisory_class_name($s_name);
+    my $histclass = $self->get_audit_history_class_name($s_name);
     DBIx::Class::Componentised->inject_base($histclass, 'DBIx::Class::Schema::Journal::DB::AuditHistory');
-    $histclass->result_source_instance->name(lc($s_name) . "_audit_hisory");
+    $histclass->table(lc($s_name) . "_audit_history");
+#    $histclass->result_source_instance->name(lc($s_name) . "_audit_hisory");
     $histclass->add_columns(
                             map { $_ => $source->column_info($_) } $source->columns
                            );
                            
+    $self->_journal_schema->register_class("${s_name}AuditHistory", $histclass);
 }
 
 sub create_changeset

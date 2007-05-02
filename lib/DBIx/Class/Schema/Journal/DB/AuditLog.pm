@@ -1,6 +1,7 @@
 package DBIx::Class::Schema::Journal::DB::AuditLog;
 
 use base 'DBIx::Class::Schema::Journal::DB::Base';
+__PACKAGE__->table(__PACKAGE__->table);
 
 __PACKAGE__->add_columns(
                            ID => {
