@@ -23,13 +23,13 @@ __PACKAGE__->add_columns(
 
 sub new
 {
-    my ($self, $data, @rest) = @_;
+    my ($self, $data, $source, @rest) = @_;
 
     $data->{created} = {
-        changeset_id => $self->result_source->schema->_journal_schema->current_changeset,
+        changeset_id => $source->schema->current_changeset,
     };
 
-    $self->next::method($data, @rest);
+    $self->next::method($data, $source, @rest);
 }                           
 
 1;

@@ -45,7 +45,9 @@ sub connection
         return;
     }
 
+    $self->_journal_schema->deploy();
     $self->_journal_schema->class('ChangeSet')->belongs_to('user', @{$self->journal_user});
+    $self->_journal_schema->storage->disconnect();
 }
 
 sub get_audit_log_class_name
@@ -84,19 +86,19 @@ sub create_journal_for
     $self->_journal_schema->register_class("${s_name}AuditHistory", $histclass);
 }
 
-sub create_changeset
+sub txn_do
 {
     my ($self, $code) = @_;
 
     ## Create a new changeset, then run $code as a transaction
-    my $cs = $self->result_source->schema->_journal_schema->resultset('ChangeSet');
+    my $cs = $self->_journal_schema->resultset('ChangeSet');
     my $changeset = $cs->create({
-        user_id => $self->result_source->schema->_journal_schema->current_user(),
-        session_id => $self->result_source->schema->_journal_schema->current_session(),
+        user_id => $self->_journal_schema->current_user(),
+        session_id => $self->_journal_schema->current_session(),
     });
-    $self->result_source->schema->_journal_schema->current_changeset($changeset->ID);
+    $self->_journal_schema->current_changeset($changeset->ID);
 
-    $self->txn_do($code);
+    $self->next::method($code);
 }
 
 1;
