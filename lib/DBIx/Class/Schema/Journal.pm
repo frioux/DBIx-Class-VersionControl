@@ -16,15 +16,17 @@ sub connection
     my $self = shift;
     $self->next::method(@_);
 
+   print STDERR join(":", $self->sources), "\n";
+
     my $journal_schema = DBIx::Class::Schema::Journal::DB->connect(@{ $self->journal_connection || $self->storage->connect_info });
-    print STDERR "conn", $journal_schema->storage->connect_info;
+#    print STDERR "conn", $journal_schema->storage->connect_info;
     if($self->journal_storage_type)
     {
         $journal_schema->storage_type($self->journal_storage_type);
     }
 
     ## get our own private version of the journaling sources
-    $self->_journal_schema($journal_schema->compose_namespace(blessed($self) . '::Journal'));
+   $self->_journal_schema($journal_schema->compose_namespace(blessed($self) . '::Journal'));
 
     ## Create auditlog+history per table
     my %j_sources = @{$self->journal_sources} ? map { $_ => 1 } @{$self->journal_sources} : map { $_ => 1 } $self->sources;
@@ -33,7 +35,7 @@ sub connection
         next unless($j_sources{$s_name});
         $self->create_journal_for($s_name);
         $self->class($s_name)->load_components('Journal');
-        print STDERR "$s_name :", $self->class($s_name), "\n";
+#        print STDERR "$s_name :", $self->class($s_name), "\n";
     }
 
     ## Set up relationship between changeset->user_id and this schema's user
