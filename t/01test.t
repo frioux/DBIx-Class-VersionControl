@@ -21,9 +21,12 @@ isa_ok($schema->_journal_schema->source('CDAuditHistory'), 'DBIx::Class::ResultS
 isa_ok($schema->_journal_schema->source('ArtistAuditLog'), 'DBIx::Class::ResultSource', 'ArtistAuditLog source exists');
 
 my $new_cd = $schema->txn_do( sub {
+    my $artist = $schema->resultset('Artist')->create({
+        name => 'Fred Bloggs',
+    });
     return  $schema->resultset('CD')->create({
         title => 'Angry young man',
-        artist => 0,
+        artist => $artist,
         year => 2000,
     });
 });

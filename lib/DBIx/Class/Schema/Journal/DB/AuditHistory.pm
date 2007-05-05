@@ -14,8 +14,10 @@ sub new
 {
     my ($self, $data, @rest) = @_;
 
-    $data->{change} = {
-        changeset_id => $self->result_source->schema->_journal_schema->current_changeset,
+    $data->{change} = { 
+#        ID => \'DEFAULT',
+        changeset_id => $source->schema->current_changeset,
+        %{$data->{created}}, 
     };
 
     $self->next::method($data, @rest);

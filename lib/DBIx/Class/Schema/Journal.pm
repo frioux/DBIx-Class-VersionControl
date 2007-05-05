@@ -11,6 +11,18 @@ __PACKAGE__->mk_classdata('journal_sources'); ## [ source names ]
 __PACKAGE__->mk_classdata('journal_user'); ## [ class, field for user id ]
 __PACKAGE__->mk_classdata('_journal_schema');
 
+sub throw_exception
+{
+}
+
+sub exception_action
+{
+    my $self = shift;
+    print STDERR Carp::longmess;
+    
+    $self->next::method(@_);
+}
+
 sub connection
 {
     my $self = shift;
@@ -92,8 +104,8 @@ sub txn_do
 
     ## Create a new changeset, then run $code as a transaction
     my $cs = $self->_journal_schema->resultset('ChangeSet');
-    my $changeset = $cs->create({
-        user_id => $self->_journal_schema->current_user(),
+    my $changeset = $cs->create({ ( $self->_journal_schema->current_user() ? ( user_id => $self->_journal_schema->current_user()) : () ),
+#        user_id => $self->_journal_schema->current_user(),
         session_id => $self->_journal_schema->current_session(),
     });
     $self->_journal_schema->current_changeset($changeset->ID);

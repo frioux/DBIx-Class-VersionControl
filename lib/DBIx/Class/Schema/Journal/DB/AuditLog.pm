@@ -25,8 +25,10 @@ sub new
 {
     my ($self, $data, $source, @rest) = @_;
 
-    $data->{created} = {
+    $data->{created} = { 
+#        ID => \'DEFAULT',
         changeset_id => $source->schema->current_changeset,
+        %{$data->{created}}, 
     };
 
     $self->next::method($data, $source, @rest);

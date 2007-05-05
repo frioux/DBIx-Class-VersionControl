@@ -25,7 +25,9 @@ sub insert
         print STDERR "Schema: ", ref($self->result_source->schema), "\n";
         my $al = $self->result_source->schema->_journal_schema->resultset("${s_name}AuditLog");
         $al->create({
-            changeset => $self->result_source->schema->_journal_schema->current_changeset(),
+#            created => {
+#                changeset => $self->result_source->schema->_journal_schema->current_changeset(),
+#            },
         });
     }
 
