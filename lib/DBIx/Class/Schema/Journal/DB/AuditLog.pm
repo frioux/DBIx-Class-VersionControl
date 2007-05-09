@@ -6,6 +6,7 @@ __PACKAGE__->table(__PACKAGE__->table);
 __PACKAGE__->add_columns(
                            ID => {
                                data_type => 'integer',
+#                               is_auto_increment => 1,
                                is_nullable => 0,
                            },
                            create_id => {
@@ -23,15 +24,17 @@ __PACKAGE__->add_columns(
 
 sub new
 {
-    my ($self, $data, $source, @rest) = @_;
+    my ($self, $data, @rest) = @_;
+    my $source = $data->{-result_source};
 
     $data->{created} = { 
 #        ID => \'DEFAULT',
+#        ID => 1,
         changeset_id => $source->schema->current_changeset,
         %{$data->{created}}, 
     };
 
-    $self->next::method($data, $source, @rest);
+    $self->next::method($data, @rest);
 }                           
 
 1;

@@ -13,6 +13,7 @@ __PACKAGE__->belongs_to('change', 'DBIx::Class::Schema::Journal::DB::Change', 'c
 sub new
 {
     my ($self, $data, @rest) = @_;
+    my $source = $data->{-result_source};
 
     $data->{change} = { 
 #        ID => \'DEFAULT',

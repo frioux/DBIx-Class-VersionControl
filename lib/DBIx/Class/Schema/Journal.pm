@@ -18,7 +18,7 @@ sub throw_exception
 sub exception_action
 {
     my $self = shift;
-    print STDERR Carp::longmess;
+#    print STDERR Carp::longmess;
     
     $self->next::method(@_);
 }
@@ -28,7 +28,7 @@ sub connection
     my $self = shift;
     $self->next::method(@_);
 
-   print STDERR join(":", $self->sources), "\n";
+#   print STDERR join(":", $self->sources), "\n";
 
     my $journal_schema = DBIx::Class::Schema::Journal::DB->connect(@{ $self->journal_connection || $self->storage->connect_info });
 #    print STDERR "conn", $journal_schema->storage->connect_info;
@@ -104,6 +104,8 @@ sub txn_do
 
     ## Create a new changeset, then run $code as a transaction
     my $cs = $self->_journal_schema->resultset('ChangeSet');
+
+    $self->txn_begin;
     my $changeset = $cs->create({ ( $self->_journal_schema->current_user() ? ( user_id => $self->_journal_schema->current_user()) : () ),
 #        user_id => $self->_journal_schema->current_user(),
         session_id => $self->_journal_schema->current_session(),
