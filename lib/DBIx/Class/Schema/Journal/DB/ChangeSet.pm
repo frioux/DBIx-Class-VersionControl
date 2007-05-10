@@ -20,7 +20,7 @@ __PACKAGE__->add_columns(
                          set_date => {
                              data_type => 'timestamp',
                              is_nullable => 0,
-                             default_value => 'NOW()',
+                             default_value => 'now()',
                          },
                          session_id => {
                              data_type => 'varchar',

@@ -19,6 +19,8 @@ __PACKAGE__->add_columns(
                                is_nullable => 1,
                                is_foreign_key => 1,
                            });
+__PACKAGE__->set_primary_key('ID');
+
   __PACKAGE__->belongs_to('created', 'DBIx::Class::Schema::Journal::DB::Change', 'create_id');
   __PACKAGE__->belongs_to('deleted', 'DBIx::Class::Schema::Journal::DB::Change', 'delete_id');
 
