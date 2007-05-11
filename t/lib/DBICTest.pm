@@ -46,9 +46,12 @@ sub init_schema {
     my $self = shift;
     my %args = @_;
     my $db_file = "t/var/DBIxClass.db";
+    my $db_audit = 't/var/Audit.db';
 
     unlink($db_file) if -e $db_file;
     unlink($db_file . "-journal") if -e $db_file . "-journal";
+    unlink($db_audit) if -e $db_audit;
+    unlink($db_audit . "-journal") if -e $db_audit . "-journal";
     mkdir("t/var") unless -d "t/var";
 
     my $dsn = $ENV{"DBICTEST_DSN"} || "dbi:SQLite:${db_file}";

@@ -17,6 +17,7 @@ sub insert
 {
     my ($self) = @_;
 
+    return if($self->in_storage);
     ## create new transaction here?
     my $res = $self->next::method();
     if($self->in_storage)

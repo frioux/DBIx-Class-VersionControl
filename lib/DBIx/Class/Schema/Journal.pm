@@ -23,6 +23,15 @@ sub exception_action
     $self->next::method(@_);
 }
 
+# sub load_classes
+# {
+#     my $class = shift;
+
+
+#     $class->next::method(@_);
+    
+# }
+
 sub connection
 {
     my $self = shift;
@@ -30,11 +39,20 @@ sub connection
 
 #   print STDERR join(":", $self->sources), "\n";
 
-    my $journal_schema = DBIx::Class::Schema::Journal::DB->connect(@{ $self->journal_connection || $self->storage->connect_info });
-#    print STDERR "conn", $journal_schema->storage->connect_info;
-    if($self->journal_storage_type)
+    my $journal_schema;
+    if(!defined($self->journal_connection))
     {
-        $journal_schema->storage_type($self->journal_storage_type);
+        ## If no connection, use the same schema/storage etc as the user
+        DBIx::Class::Componentised->inject_base(ref $self, 'DBIx::Class::Schema::Journal::DB');
+          $journal_schema = $self;
+    }
+    else
+    {
+        $journal_schema = DBIx::Class::Schema::Journal::DB->connect(@{ $self->journal_connection });
+        if($self->journal_storage_type)
+        {
+            $journal_schema->storage_type($self->journal_storage_type);
+        }
     }
 
     ## get our own private version of the journaling sources
