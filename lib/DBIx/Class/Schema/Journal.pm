@@ -11,6 +11,8 @@ __PACKAGE__->mk_classdata('journal_sources'); ## [ source names ]
 __PACKAGE__->mk_classdata('journal_user'); ## [ class, field for user id ]
 __PACKAGE__->mk_classdata('_journal_schema');
 
+our $VERSION = '0.01';
+
 sub throw_exception
 {
 }
