@@ -33,7 +33,7 @@ sub new
 #        ID => \'DEFAULT',
 #        ID => 1,
         changeset_id => $source->schema->current_changeset,
-        %{$data->{created}}, 
+        %{$data->{created}||{}}, 
     };
 
     $self->next::method($data, @rest);

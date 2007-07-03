@@ -61,7 +61,9 @@ sub connection
    $self->_journal_schema($journal_schema->compose_namespace(blessed($self) . '::Journal'));
 
     ## Create auditlog+history per table
-    my %j_sources = @{$self->journal_sources} ? map { $_ => 1 } @{$self->journal_sources} : map { $_ => 1 } $self->sources;
+    my %j_sources = map { $_ => 1 } $self->journal_sources
+                                      ? @{$self->journal_sources}
+                                      : $self->sources;
     foreach my $s_name ($self->sources)
     {
         next unless($j_sources{$s_name});

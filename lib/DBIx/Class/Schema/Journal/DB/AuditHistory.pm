@@ -18,7 +18,7 @@ sub new
     $data->{change} = { 
 #        ID => \'DEFAULT',
         changeset_id => $source->schema->current_changeset,
-        %{$data->{change}}, 
+        %{$data->{change}||{}}, 
     };
 
     $self->next::method($data, @rest);
