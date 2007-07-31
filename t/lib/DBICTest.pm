@@ -58,7 +58,19 @@ sub init_schema {
     my $dbuser = $ENV{"DBICTEST_DBUSER"} || '';
     my $dbpass = $ENV{"DBICTEST_DBPASS"} || '';
 
-    my $schema = DBICTest::Schema->compose_connection('DBICTest' => $dsn, $dbuser, $dbpass);
+    my $schema;
+    my @connect_info = ($dsn, $dbuser, $dbpass, { AutoCommit => 1 });
+
+    if ($args{compose_connection}) {
+      $schema = DBICTest::Schema->compose_connection(
+                  'DBICTest', @connect_info
+                );
+    } else {
+      $schema = DBICTest::Schema->compose_namespace('DBICTest')
+                                ->connect(@connect_info);
+    print STDERR "Created Schema: ", ref($schema), "\n";
+    }
+#    my $schema = DBICTest::Schema->compose_connection('DBICTest' => $dsn, $dbuser, $dbpass);
 #    $schema->storage->on_connect_do(['PRAGMA synchronous = OFF']);
     if ( !$args{no_deploy} ) {
         __PACKAGE__->deploy_schema( $schema );
@@ -83,15 +95,15 @@ sub deploy_schema {
     my $self = shift;
     my $schema = shift;
 
-    if ($ENV{"DBICTEST_SQLT_DEPLOY"}) {
+#    if ($ENV{"DBICTEST_SQLT_DEPLOY"}) {
         return $schema->deploy();
-    } else {
-        open IN, "t/lib/sqlite.sql";
-        my $sql;
-        { local $/ = undef; $sql = <IN>; }
-        close IN;
-        ($schema->storage->dbh->do($_) || print "Error on SQL: $_\n") for split(/;\n/, $sql);
-    }
+#     } else {
+#         open IN, "t/lib/sqlite.sql";
+#         my $sql;
+#         { local $/ = undef; $sql = <IN>; }
+#         close IN;
+#         ($schema->storage->dbh->do($_) || print "Error on SQL: $_\n") for split(/;\n/, $sql);
+#     }
 }
 
 =head2 populate_schema

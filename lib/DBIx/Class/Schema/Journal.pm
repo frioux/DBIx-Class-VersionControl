@@ -37,7 +37,7 @@ sub exception_action
 sub connection
 {
     my $self = shift;
-    $self->next::method(@_);
+    my $schema = $self->next::method(@_);
 
 #   print STDERR join(":", $self->sources), "\n";
 
@@ -82,6 +82,8 @@ sub connection
     $self->_journal_schema->deploy();
     $self->_journal_schema->class('ChangeSet')->belongs_to('user', @{$self->journal_user});
     $self->_journal_schema->storage->disconnect();
+
+    return $schema;
 }
 
 sub get_audit_log_class_name
@@ -128,10 +130,13 @@ sub txn_do
     my $cs = $self->_journal_schema->resultset('ChangeSet');
 
     $self->txn_begin;
-    my $changeset = $cs->create({ ( $self->_journal_schema->current_user() ? ( user_id => $self->_journal_schema->current_user()) : () ),
-#        user_id => $self->_journal_schema->current_user(),
-        session_id => $self->_journal_schema->current_session(),
-    });
+    my %changesetdata = ( $self->_journal_schema->current_user() ? ( 'user_id', $self->_journal_schema->current_user()) : () ),
+    ( $self->_journal_schema->current_session() ? ( session_id => $self->_journal_schema->current_session() ) : () );
+    if(!%changesetdata)
+    {
+        %changesetdata = ( ID => undef );
+    }
+    my $changeset = $cs->create({ %changesetdata });
     $self->_journal_schema->current_changeset($changeset->ID);
 
     $self->next::method($code);
