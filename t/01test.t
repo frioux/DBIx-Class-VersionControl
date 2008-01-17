@@ -10,7 +10,7 @@ BEGIN {
     eval "use DBD::SQLite";
     plan $@
         ? ( skip_all => 'needs DBD::SQLite for testing' )
-        : ( tests => 9 );
+        : ( tests => 12 );
 }
 
 my $schema = DBICTest->init_schema(no_populate => 1);
@@ -59,4 +59,30 @@ $schema->txn_do( sub {
 
 my $alentry = $search->find({ ID => $new_cd->get_column($new_cd->primary_columns) });
 ok(defined($alentry->deleted), 'Deleted set in audit_log');
+
+$schema->changeset_user(1);
+$schema->txn_do( sub {
+    $schema->resultset('CD')->create({
+        title => 'Something 2',
+        artist => $artist,
+        year => 1999,
+    });
+} );
+
+ok($search->count > 1, 'Created an second entry in the CD audit history');
+
+my $cset = $schema->_journal_schema->resultset('ChangeSet')->find(5);
+is($cset->user_id, 1, 'Set user id for 5th changeset');
+
+$schema->changeset_session(1);
+$schema->txn_do( sub {
+    $schema->resultset('CD')->create({
+        title => 'Something 3',
+        artist => $artist,
+        year => 1999,
+    });
+} );
+
+my $cset2 = $schema->_journal_schema->resultset('ChangeSet')->find(6);
+is($cset2->session_id, 1, 'Set session id for 6th changeset');
 

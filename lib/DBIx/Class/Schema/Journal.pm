@@ -9,21 +9,24 @@ __PACKAGE__->mk_classdata('journal_storage_type');
 __PACKAGE__->mk_classdata('journal_connection');
 __PACKAGE__->mk_classdata('journal_sources'); ## [ source names ]
 __PACKAGE__->mk_classdata('journal_user'); ## [ class, field for user id ]
-__PACKAGE__->mk_classdata('_journal_schema');
+__PACKAGE__->mk_classdata('_journal_schema'); ## schema object for journal
 
 our $VERSION = '0.01';
 
-sub throw_exception
-{
-}
+use strict;
+use warnings;
 
-sub exception_action
-{
-    my $self = shift;
-#    print STDERR Carp::longmess;
+# sub throw_exception
+# {
+# }
+
+# sub exception_action
+# {
+#     my $self = shift;
+# #    print STDERR Carp::longmess;
     
-    $self->next::method(@_);
-}
+#     $self->next::method(@_);
+# }
 
 # sub load_classes
 # {
@@ -130,8 +133,24 @@ sub txn_do
     my $cs = $self->_journal_schema->resultset('ChangeSet');
 
     $self->txn_begin;
-    my %changesetdata = ( $self->_journal_schema->current_user() ? ( 'user_id', $self->_journal_schema->current_user()) : () ),
-    ( $self->_journal_schema->current_session() ? ( session_id => $self->_journal_schema->current_session() ) : () );
+    my %changesetdata;
+    if( defined $self->_journal_schema->current_user() )
+    {
+        $changesetdata{user_id} = $self->_journal_schema->current_user();
+    }
+    if( defined $self->_journal_schema->current_session() )
+    {
+        $changesetdata{session_id} = $self->_journal_schema->current_session();
+    }
+
+#         ( 
+#           $self->_journal_schema->current_user() 
+#           ? ( user_id => $self->_journal_schema->current_user()) 
+#           : (),
+#           $self->_journal_schema->current_session() 
+#           ? ( session_id => $self->_journal_schema->current_session() ) 
+#           : () 
+#         );
     if(!%changesetdata)
     {
         %changesetdata = ( ID => undef );
@@ -141,5 +160,24 @@ sub txn_do
 
     $self->next::method($code);
 }
+
+sub changeset_user
+{
+    my ($self, $userid) = @_;
+
+    return $self->_journal_schema->current_user() if(@_ == 1);
+
+    $self->_journal_schema->current_user($userid);
+}
+
+sub changeset_session
+{
+    my ($self, $sessionid) = @_;
+
+    return $self->_journal_schema->current_session() if(@_ == 1);
+
+    $self->_journal_schema->current_session($sessionid);
+}
+
 
 1;

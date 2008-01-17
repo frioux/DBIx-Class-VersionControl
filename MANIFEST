@@ -4,7 +4,6 @@ lib/DBIx/Class/Schema/Journal.pm
 lib/DBIx/Class/Schema/Journal/DB.pm
 lib/DBIx/Class/Schema/Journal/DB/AuditHistory.pm
 lib/DBIx/Class/Schema/Journal/DB/AuditLog.pm
-lib/DBIx/Class/Schema/Journal/DB/AuduitLog.pm
 lib/DBIx/Class/Schema/Journal/DB/Base.pm
 lib/DBIx/Class/Schema/Journal/DB/Change.pm
 lib/DBIx/Class/Schema/Journal/DB/ChangeSet.pm
@@ -16,3 +15,4 @@ t/lib/DBICTest/Schema.pm
 t/lib/DBICTest/Schema/Artist.pm
 t/lib/DBICTest/Schema/CD.pm
 t/lib/DBICTest/Schema/Track.pm
+META.yml                                 Module meta-data (added by MakeMaker)
