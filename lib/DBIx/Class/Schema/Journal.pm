@@ -88,7 +88,7 @@ sub connection
     ## Set up relationship between changeset->user_id and this schema's user
     if(!@{$self->journal_user || []})
     {
-        warn "No Journal User set!";
+        #warn "No Journal User set!"; # no need to warn, user_id is useful even without a rel
         return $schema;
     }
 
