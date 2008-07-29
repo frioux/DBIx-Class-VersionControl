@@ -7,6 +7,7 @@ use DBIx::Class::Schema::Journal::DB;
 
 __PACKAGE__->mk_classdata('journal_storage_type');
 __PACKAGE__->mk_classdata('journal_connection');
+__PACKAGE__->mk_classdata('journal_no_automatic_deploy');
 __PACKAGE__->mk_classdata('journal_sources'); ## [ source names ]
 __PACKAGE__->mk_classdata('journal_user'); ## [ class, field for user id ]
 __PACKAGE__->mk_classdata('_journal_schema'); ## schema object for journal
@@ -76,7 +77,8 @@ sub connection
     }
 
 
-    $self->journal_schema_deploy();
+    $self->journal_schema_deploy()
+        unless $self->journal_no_automatic_deploy;
 
     ## Set up relationship between changeset->user_id and this schema's user
     if(!@{$self->journal_user || []})
