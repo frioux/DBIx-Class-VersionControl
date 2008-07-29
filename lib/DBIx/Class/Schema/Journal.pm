@@ -172,7 +172,7 @@ sub txn_do
 
     my $jschema = $self->_journal_schema;
 
-    my $code;
+    my $code = $user_code;
 
     my $current_changeset = $jschema->current_changeset;
     if ( !$current_changeset || $self->journal_nested_changesets )
@@ -187,13 +187,19 @@ sub txn_do
 
         # wrap the thunk with a new changeset creation
         $code = sub {
-            my $changeset = $jschema->journal_create_changeset( parent_id => $current_changeset );
-            local $current_changeset_ref->{changeset} = $changeset->ID;
-            $user_code->(@_);
-        };
+			my $changeset = $jschema->journal_create_changeset( parent_id => $current_changeset );
+			local $current_changeset_ref->{changeset} = $changeset->ID;
+			$user_code->(@_);
+		};
+
     }
 
-    $self->next::method($code || $user_code);
+	if ( $jschema != $self ) {
+		my $inner_code = $code;
+		$code = sub { $jschema->txn_do($inner_code, @_) };
+	}
+
+	return $self->next::method($code, @args);
 }
 
 sub changeset_user
