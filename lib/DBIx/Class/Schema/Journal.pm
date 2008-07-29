@@ -75,18 +75,26 @@ sub connection
 #        print STDERR "$s_name :", $self->class($s_name), "\n";
     }
 
+
+    $self->journal_schema_deploy();
+
     ## Set up relationship between changeset->user_id and this schema's user
-    if(!@{$self->journal_user})
+    if(!@{$self->journal_user || []})
     {
         warn "No Journal User set!";
-        return;
+        return $schema;
     }
 
-    $self->_journal_schema->deploy();
     $self->_journal_schema->class('ChangeSet')->belongs_to('user', @{$self->journal_user});
     $self->_journal_schema->storage->disconnect();
 
     return $schema;
+}
+
+sub journal_schema_deploy
+{
+    my ( $self, @args ) = @_;
+    $self->_journal_schema->deploy( @args );
 }
 
 sub get_audit_log_class_name
