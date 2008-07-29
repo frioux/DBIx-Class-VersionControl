@@ -10,7 +10,7 @@ BEGIN {
     eval "use DBD::SQLite";
     plan $@
         ? ( skip_all => 'needs DBD::SQLite for testing' )
-        : ( tests => 12 );
+        : ( tests => 14 );
 }
 
 my $schema = DBICTest->init_schema(no_populate => 1);
@@ -19,6 +19,18 @@ ok($schema, 'Created a Schema');
 isa_ok($schema->_journal_schema, 'DBIx::Class::Schema::Journal::DB', 'Actually have a schema object for the journaling');
 isa_ok($schema->_journal_schema->source('CDAuditHistory'), 'DBIx::Class::ResultSource', 'CDAuditHistory source exists');
 isa_ok($schema->_journal_schema->source('ArtistAuditLog'), 'DBIx::Class::ResultSource', 'ArtistAuditLog source exists');
+
+{
+	my $count = eval { 
+		warn $schema->_journal_schema->resultset('ArtistAuditLog')->count;
+   	};
+	my $e = $@;
+
+	is( $count, undef, "no count" );
+	like( $e, qr/table.*artist_audit_log/i, "missing table error" );
+}
+
+$schema->journal_schema_deploy();
 
 my $artist;
 my $new_cd = $schema->txn_do( sub {
