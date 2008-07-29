@@ -7,11 +7,12 @@ use DBIx::Class::Schema::Journal::DB;
 
 __PACKAGE__->mk_classdata('journal_storage_type');
 __PACKAGE__->mk_classdata('journal_connection');
-__PACKAGE__->mk_classdata('journal_no_automatic_deploy');
+__PACKAGE__->mk_classdata('journal_deploy_on_connect');
 __PACKAGE__->mk_classdata('journal_sources'); ## [ source names ]
 __PACKAGE__->mk_classdata('journal_user'); ## [ class, field for user id ]
 __PACKAGE__->mk_classdata('_journal_schema'); ## schema object for journal
 __PACKAGE__->mk_classdata('_journal_internal_sources'); # the sources used to journal journal_sources
+__PACKAGE__->mk_classdata('journal_nested_changesets');
 
 our $VERSION = '0.01';
 
@@ -63,7 +64,7 @@ sub connection
     }
 
     ## get our own private version of the journaling sources
-   $self->_journal_schema($journal_schema->compose_namespace(blessed($self) . '::Journal'));
+    $self->_journal_schema($journal_schema->compose_namespace(blessed($self) . '::Journal'));
 
     ## Create auditlog+history per table
     my %j_sources = map { $_ => 1 } $self->journal_sources
@@ -82,8 +83,13 @@ sub connection
 
     $self->_journal_internal_sources(\@journal_sources);
 
+    if ( $self->journal_nested_changesets ) {
+        $self->_journal_schema->nested_changesets(1);
+        die "FIXME nested changeset schema not yet supported... add parent_id to ChangeSet here";
+    }
+
     $self->journal_schema_deploy()
-        unless $self->journal_no_automatic_deploy;
+        if $self->journal_deploy_on_connect;
 
     ## Set up relationship between changeset->user_id and this schema's user
     if(!@{$self->journal_user || []})
@@ -96,6 +102,17 @@ sub connection
     $self->_journal_schema->storage->disconnect();
 
     return $schema;
+}
+
+sub deploy
+{
+    my ( $self, $sqlt_args, @args ) = @_;
+
+    $self->next::method($sqlt_args, @args);
+
+    $sqlt_args ||= {};
+    local $sqlt_args->{sources} = $self->_journal_internal_sources;
+    $self->journal_schema_deploy($sqlt_args, @args);
 }
 
 sub journal_schema_deploy
@@ -151,38 +168,32 @@ sub create_journal_for
 
 sub txn_do
 {
-    my ($self, $code) = @_;
+    my ($self, $user_code, @args) = @_;
 
-    ## Create a new changeset, then run $code as a transaction
-    my $cs = $self->_journal_schema->resultset('ChangeSet');
+    my $jschema = $self->_journal_schema;
 
-    $self->txn_begin;
-    my %changesetdata;
-    if( defined $self->_journal_schema->current_user() )
+    my $code;
+
+    my $current_changeset = $jschema->current_changeset;
+    if ( !$current_changeset || $self->journal_nested_changesets )
     {
-        $changesetdata{user_id} = $self->_journal_schema->current_user();
-    }
-    if( defined $self->_journal_schema->current_session() )
-    {
-        $changesetdata{session_id} = $self->_journal_schema->current_session();
+        my $current_changeset_ref = $jschema->_current_changeset_container;
+
+        unless ( $current_changeset_ref ) {
+            # this is a hash because scalar refs can't be localized
+            $current_changeset_ref = { };
+            $jschema->_current_changeset_container($current_changeset_ref);
+        }
+
+        # wrap the thunk with a new changeset creation
+        $code = sub {
+            my $changeset = $jschema->journal_create_changeset( parent_id => $current_changeset );
+            local $current_changeset_ref->{changeset} = $changeset->ID;
+            $user_code->(@_);
+        };
     }
 
-#         ( 
-#           $self->_journal_schema->current_user() 
-#           ? ( user_id => $self->_journal_schema->current_user()) 
-#           : (),
-#           $self->_journal_schema->current_session() 
-#           ? ( session_id => $self->_journal_schema->current_session() ) 
-#           : () 
-#         );
-    if(!%changesetdata)
-    {
-        %changesetdata = ( ID => undef );
-    }
-    my $changeset = $cs->create({ %changesetdata });
-    $self->_journal_schema->current_changeset($changeset->ID);
-
-    $self->next::method($code);
+    $self->next::method($code || $user_code);
 }
 
 sub changeset_user

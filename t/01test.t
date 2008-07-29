@@ -10,7 +10,7 @@ BEGIN {
     eval "use DBD::SQLite";
     plan $@
         ? ( skip_all => 'needs DBD::SQLite for testing' )
-        : ( tests => 14 );
+        : ( tests => 15 );
 }
 
 my $schema = DBICTest->init_schema(no_populate => 1);
@@ -20,30 +20,27 @@ isa_ok($schema->_journal_schema, 'DBIx::Class::Schema::Journal::DB', 'Actually h
 isa_ok($schema->_journal_schema->source('CDAuditHistory'), 'DBIx::Class::ResultSource', 'CDAuditHistory source exists');
 isa_ok($schema->_journal_schema->source('ArtistAuditLog'), 'DBIx::Class::ResultSource', 'ArtistAuditLog source exists');
 
-{
-	my $count = eval { 
-		warn $schema->_journal_schema->resultset('ArtistAuditLog')->count;
-   	};
-	my $e = $@;
-
-	is( $count, undef, "no count" );
-	like( $e, qr/table.*artist_audit_log/i, "missing table error" );
-}
-
-$schema->journal_schema_deploy();
-
 my $artist;
 my $new_cd = $schema->txn_do( sub {
+    my $current_changeset = $schema->_journal_schema->current_changeset;
+    ok( $current_changeset, "have a current changeset" );
+
     $artist = $schema->resultset('Artist')->create({
         name => 'Fred Bloggs',
     });
-    return  $schema->resultset('CD')->create({
-        title => 'Angry young man',
-        artist => $artist,
-        year => 2000,
+
+    $schema->txn_do(sub {
+        is( $current_changeset, $schema->_journal_schema->current_changeset, "nested txn doesn't create a new changeset" );
+        return $schema->resultset('CD')->create({
+            title => 'Angry young man',
+            artist => $artist,
+            year => 2000,
+        });
     });
 });
 isa_ok($new_cd, 'DBIx::Class::Journal', 'Created CD object');
+
+is( $schema->_journal_schema->current_changeset, undef, "no current changeset" );
 
 my $search = $schema->_journal_schema->resultset('CDAuditLog')->search();
 ok($search->count, 'Created an entry in the CD audit log');
