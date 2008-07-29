@@ -11,6 +11,7 @@ __PACKAGE__->mk_classdata('journal_no_automatic_deploy');
 __PACKAGE__->mk_classdata('journal_sources'); ## [ source names ]
 __PACKAGE__->mk_classdata('journal_user'); ## [ class, field for user id ]
 __PACKAGE__->mk_classdata('_journal_schema'); ## schema object for journal
+__PACKAGE__->mk_classdata('_journal_internal_sources'); # the sources used to journal journal_sources
 
 our $VERSION = '0.01';
 
@@ -68,14 +69,18 @@ sub connection
     my %j_sources = map { $_ => 1 } $self->journal_sources
                                       ? @{$self->journal_sources}
                                       : $self->sources;
+
+    my @journal_sources = $journal_schema->sources; # not sources to journal, but sources used by the journal internally
+
     foreach my $s_name ($self->sources)
     {
         next unless($j_sources{$s_name});
-        $self->create_journal_for($s_name);
+        push @journal_sources, $self->create_journal_for($s_name);
         $self->class($s_name)->load_components('Journal');
 #        print STDERR "$s_name :", $self->class($s_name), "\n";
     }
 
+    $self->_journal_internal_sources(\@journal_sources);
 
     $self->journal_schema_deploy()
         unless $self->journal_no_automatic_deploy;
@@ -95,8 +100,13 @@ sub connection
 
 sub journal_schema_deploy
 {
-    my ( $self, @args ) = @_;
-    $self->_journal_schema->deploy( @args );
+    my ( $self, $sqlt_args, @args ) = @_;
+
+    $sqlt_args ||= {};
+    $sqlt_args->{sources} = $self->_journal_internal_sources
+        unless exists $sqlt_args->{sources};
+
+    $self->_journal_schema->deploy( $sqlt_args, @args );
 }
 
 sub get_audit_log_class_name
@@ -121,7 +131,8 @@ sub create_journal_for
     my $newclass = $self->get_audit_log_class_name($s_name);
     DBIx::Class::Componentised->inject_base($newclass, 'DBIx::Class::Schema::Journal::DB::AuditLog');
     $newclass->table(lc($s_name) . "_audit_log");
-    $self->_journal_schema->register_class("${s_name}AuditLog", $newclass);
+    my $log_source = "${s_name}AuditLog";
+    $self->_journal_schema->register_class($log_source, $newclass);
                            
 
     my $histclass = $self->get_audit_history_class_name($s_name);
@@ -132,7 +143,10 @@ sub create_journal_for
                             map { $_ => $source->column_info($_) } $source->columns
                            );
                            
-    $self->_journal_schema->register_class("${s_name}AuditHistory", $histclass);
+    my $hist_source = "${s_name}AuditHistory";
+    $self->_journal_schema->register_class($hist_source, $histclass);
+
+    return ( $log_source, $hist_source );
 }
 
 sub txn_do
