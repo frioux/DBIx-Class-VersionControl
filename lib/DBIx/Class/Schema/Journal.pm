@@ -13,8 +13,6 @@ __PACKAGE__->mk_classdata('journal_user'); ## [ class, field for user id ]
 __PACKAGE__->mk_classdata('_journal_schema'); ## schema object for journal
 __PACKAGE__->mk_classdata('journal_nested_changesets');
 
-our $VERSION = '0.01';
-
 use strict;
 use warnings;
 
