@@ -21,16 +21,16 @@ isa_ok($schema->_journal_schema->source('CDAuditHistory'), 'DBIx::Class::ResultS
 isa_ok($schema->_journal_schema->source('ArtistAuditLog'), 'DBIx::Class::ResultSource', 'ArtistAuditLog source exists');
 
 my $count = eval { 
-    $schema->_journal_schema->resultset('ArtistAuditHistory')->count;
+    $schema->_journal_schema->resultset('ChangeLog')->count;
 };
 my $e = $@;
 
 is( $count, undef, "no count" );
-like( $e, qr/table.*artist_audit_log/i, "missing table error" );
+like( $e, qr/table.*changelog/, "missing table error" );
 
 $schema->journal_schema_deploy();
 
-$count = eval { $schema->_journal_schema->resultset('ArtistAuditHistory')->count };
+$count = eval { $schema->_journal_schema->resultset('ChangeLog')->count };
 
 is( $@, '', "no error" );
 is( $count, 0, "count is 0" );
