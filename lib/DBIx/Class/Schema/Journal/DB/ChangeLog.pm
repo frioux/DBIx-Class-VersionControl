@@ -7,7 +7,7 @@ __PACKAGE__->load_components(qw/Ordered Core/);
 __PACKAGE__->table('change_log');
 
 __PACKAGE__->add_columns(
-                         id => {
+                         ID => {
                              data_type => 'integer',
                              is_auto_increment => 1,
                              is_primary_key => 1,
@@ -25,7 +25,7 @@ __PACKAGE__->add_columns(
                          );
 
 
-__PACKAGE__->set_primary_key('id');
+__PACKAGE__->set_primary_key('ID');
 __PACKAGE__->add_unique_constraint('setorder', [ qw/changeset_id order_in/ ]);
 __PACKAGE__->belongs_to('changeset', 'DBIx::Class::Schema::Journal::DB::ChangeSet', 'changeset_id');
 

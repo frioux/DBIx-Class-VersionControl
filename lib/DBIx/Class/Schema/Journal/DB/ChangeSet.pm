@@ -6,7 +6,7 @@ __PACKAGE__->load_components(qw/InflateColumn::DateTime Core/);
 __PACKAGE__->table('changeset');
 
 __PACKAGE__->add_columns(
-                         id => {
+                         ID => {
                              data_type => 'integer',
                              is_auto_increment => 1,
                              is_primary_key => 1,
@@ -34,6 +34,6 @@ sub new {
     return $self;
 }
 
-__PACKAGE__->set_primary_key('id');
+__PACKAGE__->set_primary_key('ID');
 
 1;
