@@ -7,23 +7,32 @@ __PACKAGE__->mk_group_accessors( simple => 'current_user' );
 __PACKAGE__->mk_group_accessors( simple => 'current_session' );
 __PACKAGE__->mk_group_accessors( simple => '_current_changeset_container' );
 
+DBIx::Class::Schema::Journal::DB->load_classes(qw/
+                                               ChangeSet
+                                               ChangeLog
+                                               AuditLog
+                                               AuditHistory
+                                               /);
+
+
+sub _current_changeset {
+    my $self = shift;
+    my $ref = $self->_current_changeset_container;
+    $ref && $ref->{changeset};
+}
+
 # this is for localization of the current changeset
 sub current_changeset {
     my ( $self, @args ) = @_;
 
-    $self->throw_error("setting current_changeset is not supported, use txn_do to create a new changeset") if @args;
+    $self->throw_exception("setting current_changeset is not supported, use txn_do to create a new changeset") if @args;
 
-    my $ref = $self->_current_changeset_container;
+    my $id = $self->_current_changeset;
 
-    return $ref && $ref->{changeset};
+    $self->throw_exception("Can't call current_changeset outside of a transaction") unless $id;
+
+    return $id;
 }
-
-DBIx::Class::Schema::Journal::DB->load_classes(qw/
-                                               ChangeSet
-                                               Change
-                                               AuditLog
-                                               AuditHistory
-                                               /);
 
 sub journal_create_changeset {
     my ( $self, @args ) = @_;

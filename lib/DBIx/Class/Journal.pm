@@ -69,8 +69,8 @@ sub delete
             $self->throw_exception( "No audit_log entry found for ".ref($self) . " item $pri" ) if(!$alentry);
              
             ## bulk_update doesnt do "create new item on update of rel-accessor with hashref, yet
-            my $change = $self->result_source->schema->_journal_schema->resultset('Change')->create({ changeset_id => $self->result_source->schema->_journal_schema->current_changeset });
-            $alentry->delete_id($change->ID);
+            my $change = $self->result_source->schema->_journal_schema->resultset('ChangeLog')->create({ changeset_id => $self->result_source->schema->_journal_schema->current_changeset });
+            $alentry->delete_id($change->id);
             $alentry->update();
         }
     }

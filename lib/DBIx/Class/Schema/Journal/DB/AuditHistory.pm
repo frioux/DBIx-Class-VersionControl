@@ -8,7 +8,7 @@ __PACKAGE__->add_columns(
                                data_type => 'integer',
                                is_nullable => 0,
                            });
-__PACKAGE__->belongs_to('change', 'DBIx::Class::Schema::Journal::DB::Change', 'change_id');
+__PACKAGE__->belongs_to('change', 'DBIx::Class::Schema::Journal::DB::ChangeLog', 'change_id');
 
 sub new
 {

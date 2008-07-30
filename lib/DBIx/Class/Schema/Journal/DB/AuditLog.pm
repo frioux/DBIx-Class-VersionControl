@@ -21,8 +21,8 @@ __PACKAGE__->add_columns(
                            });
 __PACKAGE__->set_primary_key('ID');
 
-  __PACKAGE__->belongs_to('created', 'DBIx::Class::Schema::Journal::DB::Change', 'create_id');
-  __PACKAGE__->belongs_to('deleted', 'DBIx::Class::Schema::Journal::DB::Change', 'delete_id');
+  __PACKAGE__->belongs_to('created', 'DBIx::Class::Schema::Journal::DB::ChangeLog', 'create_id');
+  __PACKAGE__->belongs_to('deleted', 'DBIx::Class::Schema::Journal::DB::ChangeLog', 'delete_id');
 
 sub new
 {
