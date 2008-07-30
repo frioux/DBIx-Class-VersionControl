@@ -21,7 +21,7 @@ isa_ok($schema->_journal_schema->source('CDAuditHistory'), 'DBIx::Class::ResultS
 isa_ok($schema->_journal_schema->source('ArtistAuditLog'), 'DBIx::Class::ResultSource', 'ArtistAuditLog source exists');
 
 my $count = eval { 
-    $schema->_journal_schema->resultset('ArtistAuditLog')->count;
+    $schema->_journal_schema->resultset('ArtistAuditHistory')->count;
 };
 my $e = $@;
 
@@ -30,7 +30,7 @@ like( $e, qr/table.*artist_audit_log/i, "missing table error" );
 
 $schema->journal_schema_deploy();
 
-$count = eval { $schema->_journal_schema->resultset('ArtistAuditLog')->count };
+$count = eval { $schema->_journal_schema->resultset('ArtistAuditHistory')->count };
 
 is( $@, '', "no error" );
 is( $count, 0, "count is 0" );

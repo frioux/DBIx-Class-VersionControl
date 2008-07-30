@@ -112,60 +112,22 @@ sub journal_schema_deploy
     $self->_journal_schema->deploy( $sqlt_args, @args );
 }
 
-sub get_audit_log_class_name
-{
-    my ($self, $sourcename) = @_;
-
-    return blessed($self->_journal_schema) . "::${sourcename}AuditLog";
-}
-
-sub get_audit_history_class_name
-{
-    my ($self, $sourcename) = @_;
-
-    return blessed($self->_journal_schema) . "::${sourcename}AuditHistory";
-}
-
 sub create_journal_for
 {
     my ($self, $s_name) = @_;
 
     my $source = $self->source($s_name);
-    my $logclass = $self->get_audit_log_class_name($s_name);
 
-    DBIx::Class::Componentised->inject_base($logclass, 'DBIx::Class::Schema::Journal::DB::AuditLog');
-    $logclass->journal_define_table($source);
+    foreach my $audit (qw(AuditLog AuditHistory)) {
+        my $audit_source = join("", $s_name, $audit);
+        my $class = blessed($self->_journal_schema) . "::$audit_source";
 
-    my $log_source = "${s_name}AuditLog";
-    $self->_journal_schema->register_class($log_source, $logclass);
-                           
+        DBIx::Class::Componentised->inject_base($class, "DBIx::Class::Schema::Journal::DB::$audit");
 
-    my $histclass = $self->get_audit_history_class_name($s_name);
-    DBIx::Class::Componentised->inject_base($histclass, 'DBIx::Class::Schema::Journal::DB::AuditHistory');
-    $histclass->table(lc($s_name) . "_audit_history");
-#    $histclass->result_source_instance->name(lc($s_name) . "_audit_hisory");
+        $class->journal_define_table($source);
 
-    foreach my $column ( $source->columns ) {
-        my $info = $source->column_info($column);
-
-        my %hist_info = %$info;
-
-        delete $hist_info{$_} for qw(
-            is_foreign_key
-            is_primary_key
-            is_auto_increment
-            default_value
-        );
-        
-        $hist_info{is_nullable} = 1;
-
-        $histclass->add_column($column => \%hist_info);
+        $self->_journal_schema->register_class($audit_source, $class);
     }
-                           
-    my $hist_source = "${s_name}AuditHistory";
-    $self->_journal_schema->register_class($hist_source, $histclass);
-
-    return ( $log_source, $hist_source );
 }
 
 sub txn_do

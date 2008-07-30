@@ -7,7 +7,7 @@ sub journal_define_table {
 
     $class->load_components(qw(Core));
 
-    $class->table($source->name . "_audit_log");
+    $class->table($source->name . "_audit_history");
 
     $class->add_columns(
         create_id => {
