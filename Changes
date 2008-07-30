@@ -1,3 +1,15 @@
+0.02_01 2008-07-30
+    - support multi column primary keys
+    - rename Change to ChangeLog to avoid conflict with mysql reserved word
+    - fix schema composition when sharing connection
+    - support for nested transactions (produce one changeset, but support stubs
+      for nested changesets in place)
+    - removed dummy table
+    - various other cleanups
+    - calling current_changeset outside of txn_do is fatal
+    - fix 'now()' default value, timestamp happens in perl space instead
+    - also call txn_do on the journal schema if the storage object differs
+    - don't call txn_begin twice
 
 0.01 2007-08-11:
 Initial version
