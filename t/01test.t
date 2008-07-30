@@ -10,7 +10,7 @@ BEGIN {
     eval "use DBD::SQLite";
     plan $@
         ? ( skip_all => 'needs DBD::SQLite for testing' )
-        : ( tests => 15 );
+        : ( tests => 16 );
 }
 
 my $schema = DBICTest->init_schema(no_populate => 1);
@@ -22,7 +22,7 @@ isa_ok($schema->_journal_schema->source('ArtistAuditLog'), 'DBIx::Class::ResultS
 
 my $artist;
 my $new_cd = $schema->txn_do( sub {
-    my $current_changeset = $schema->_journal_schema->current_changeset;
+    my $current_changeset = $schema->_journal_schema->_current_changeset;
     ok( $current_changeset, "have a current changeset" );
 
     $artist = $schema->resultset('Artist')->create({
@@ -30,7 +30,7 @@ my $new_cd = $schema->txn_do( sub {
     });
 
     $schema->txn_do(sub {
-        is( $current_changeset, $schema->_journal_schema->current_changeset, "nested txn doesn't create a new changeset" );
+        is( $current_changeset, $schema->_journal_schema->_current_changeset, "nested txn doesn't create a new changeset" );
         return $schema->resultset('CD')->create({
             title => 'Angry young man',
             artist => $artist,
@@ -40,7 +40,9 @@ my $new_cd = $schema->txn_do( sub {
 });
 isa_ok($new_cd, 'DBIx::Class::Journal', 'Created CD object');
 
-is( $schema->_journal_schema->current_changeset, undef, "no current changeset" );
+is( $schema->_journal_schema->_current_changeset, undef, "no current changeset" );
+eval { $schema->_journal_schema->current_changeset };
+ok( $@, "causes error" );
 
 my $search = $schema->_journal_schema->resultset('CDAuditLog')->search();
 ok($search->count, 'Created an entry in the CD audit log');
