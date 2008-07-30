@@ -11,7 +11,6 @@ __PACKAGE__->mk_classdata('journal_deploy_on_connect');
 __PACKAGE__->mk_classdata('journal_sources'); ## [ source names ]
 __PACKAGE__->mk_classdata('journal_user'); ## [ class, field for user id ]
 __PACKAGE__->mk_classdata('_journal_schema'); ## schema object for journal
-__PACKAGE__->mk_classdata('_journal_internal_sources'); # the sources used to journal journal_sources
 __PACKAGE__->mk_classdata('journal_nested_changesets');
 
 our $VERSION = '0.01';
@@ -47,41 +46,34 @@ sub connection
 
 #   print STDERR join(":", $self->sources), "\n";
 
-    my $journal_schema;
-    if(!defined($self->journal_connection))
+    my $journal_schema = DBIx::Class::Schema::Journal::DB->compose_namespace(blessed($self) . '::Journal');
+
+    if($self->journal_connection)
     {
-        ## If no connection, use the same schema/storage etc as the user
-        DBIx::Class::Componentised->inject_base(ref $self, 'DBIx::Class::Schema::Journal::DB');
-          $journal_schema = $self;
-    }
-    else
-    {
-        $journal_schema = DBIx::Class::Schema::Journal::DB->connect(@{ $self->journal_connection });
         if($self->journal_storage_type)
         {
             $journal_schema->storage_type($self->journal_storage_type);
         }
+        $journal_schema->connection(@{ $self->journal_connection });
+    } else {
+        $journal_schema->storage( $schema->storage );
     }
 
-    ## get our own private version of the journaling sources
-    $self->_journal_schema($journal_schema->compose_namespace(blessed($self) . '::Journal'));
+    $self->_journal_schema($journal_schema);
+
 
     ## Create auditlog+history per table
     my %j_sources = map { $_ => 1 } $self->journal_sources
                                       ? @{$self->journal_sources}
                                       : $self->sources;
 
-    my @journal_sources = $journal_schema->sources; # not sources to journal, but sources used by the journal internally
-
     foreach my $s_name ($self->sources)
     {
         next unless($j_sources{$s_name});
-        push @journal_sources, $self->create_journal_for($s_name);
+        $self->create_journal_for($s_name);
         $self->class($s_name)->load_components('Journal');
 #        print STDERR "$s_name :", $self->class($s_name), "\n";
     }
-
-    $self->_journal_internal_sources(\@journal_sources);
 
     if ( $self->journal_nested_changesets ) {
         $self->_journal_schema->nested_changesets(1);
@@ -110,18 +102,12 @@ sub deploy
 
     $self->next::method($sqlt_args, @args);
 
-    $sqlt_args ||= {};
-    local $sqlt_args->{sources} = $self->_journal_internal_sources;
     $self->journal_schema_deploy($sqlt_args, @args);
 }
 
 sub journal_schema_deploy
 {
     my ( $self, $sqlt_args, @args ) = @_;
-
-    $sqlt_args ||= {};
-    $sqlt_args->{sources} = $self->_journal_internal_sources
-        unless exists $sqlt_args->{sources};
 
     $self->_journal_schema->deploy( $sqlt_args, @args );
 }
@@ -156,9 +142,23 @@ sub create_journal_for
     DBIx::Class::Componentised->inject_base($histclass, 'DBIx::Class::Schema::Journal::DB::AuditHistory');
     $histclass->table(lc($s_name) . "_audit_history");
 #    $histclass->result_source_instance->name(lc($s_name) . "_audit_hisory");
-    $histclass->add_columns(
-                            map { $_ => $source->column_info($_) } $source->columns
-                           );
+
+    foreach my $column ( $source->columns ) {
+        my $info = $source->column_info($column);
+
+        my %hist_info = %$info;
+
+        delete $hist_info{$_} for qw(
+            is_foreign_key
+            is_primary_key
+            is_auto_increment
+            default_value
+        );
+        
+        $hist_info{is_nullable} = 1;
+
+        $histclass->add_column($column => \%hist_info);
+    }
                            
     my $hist_source = "${s_name}AuditHistory";
     $self->_journal_schema->register_class($hist_source, $histclass);
@@ -174,7 +174,7 @@ sub txn_do
 
     my $code = $user_code;
 
-    my $current_changeset = $jschema->current_changeset;
+    my $current_changeset = $jschema->_current_changeset;
     if ( !$current_changeset || $self->journal_nested_changesets )
     {
         my $current_changeset_ref = $jschema->_current_changeset_container;
