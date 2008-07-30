@@ -171,19 +171,13 @@ change are added as a new row in this table.
 
 =item Arguments: \@connect_info
 
-=back
-
 Set the connection information for the database to save your audit
 information to. Leaving this blank assumes you want to store the audit
 data into your current database.
 
-=over
-
 =item journal_sources
 
 =item Arguments: \@source_names
-
-=back
 
 Set a list of source names you would like to audit, if unset, all
 sources are used.
@@ -191,54 +185,36 @@ sources are used.
 NOTE: Currently only sources with a single-column PK are supported, so
 use this method if you have sources with multi-column PKs.
 
-=over
-
 =item journal_storage_type
 
 =item Arguments: $storage_type
 
-=back
-
 Enter the special storage type of your journal schema if needed. See
 L<DBIx::Class::Storage::DBI> for more information on storage types.
-
-=over
 
 =item journal_user
 
 =item Arguments: \@relation_args
 
-=back
-
 The user_id column in the L</ChangeSet> will be linked to your user id
 with a belongs_to relation, if this is set with the appropriate
 arguments.
-
-=over
 
 =item changeset_user
 
 =item Arguments: $user_id
 
-=back
-
 Set the user_id for the following changeset(s). This must be an integer.
-
-=over
 
 =item changeset_session
 
 =item Arguments: $user_id
 
-=back
-
 Set the session_id for the following changeset(s). This must be an integer.
-
-=over
 
 =item txn_do
 
-=iitem Arguments: $code_ref
+=item Arguments: $code_ref
 
 =back
 
@@ -246,6 +222,8 @@ Overloaded L<DBIx::Class::Schema/txn_do>, this must be used to start a
 new changeset to cover a group of changes. Each subsequent change to
 an audited table will use the changeset_id created in the most recent
 txn_do call.
+
+=back
 
 =head1 SEE ALSO
 
