@@ -1,6 +1,8 @@
 package # hide from PAUSE 
     DBICTest;
 
+use Test::TempDir;
+
 use strict;
 use warnings;
 use DBICTest::Schema;
@@ -45,14 +47,7 @@ default, unless the no_deploy or no_populate flags are set.
 sub init_schema {
     my $self = shift;
     my %args = @_;
-    my $db_file = "t/var/DBIxClass.db";
-    my $db_audit = 't/var/Audit.db';
-
-    unlink($db_file) if -e $db_file;
-    unlink($db_file . "-journal") if -e $db_file . "-journal";
-    unlink($db_audit) if -e $db_audit;
-    unlink($db_audit . "-journal") if -e $db_audit . "-journal";
-    mkdir("t/var") unless -d "t/var";
+    my $db_file = temp_root->file("main.db");
 
     my $dsn = $ENV{"DBICTEST_DSN"} || "dbi:SQLite:${db_file}";
     my $dbuser = $ENV{"DBICTEST_DBUSER"} || '';
