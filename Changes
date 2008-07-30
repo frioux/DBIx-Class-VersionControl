@@ -1,4 +1,6 @@
 0.02_01 2008-07-30
+    - deployment at connect time is disabled by default, set journal_auto_deploy to reenable
+    - $main_schema->deploy deploys the journalling tables too
     - support multi column primary keys
     - rename Change to ChangeLog to avoid conflict with mysql reserved word
     - fix schema composition when sharing connection
