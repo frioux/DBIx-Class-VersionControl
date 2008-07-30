@@ -68,7 +68,7 @@ $schema->txn_do( sub {
     $new_cd->delete;
 } );
 
-my $alentry = $search->find({ ID => $new_cd->get_column($new_cd->primary_columns) });
+my $alentry = $search->find({ map { $_ => $new_cd->get_column($_) } $new_cd->primary_columns });
 ok(defined($alentry->deleted), 'Deleted set in audit_log');
 
 $schema->changeset_user(1);

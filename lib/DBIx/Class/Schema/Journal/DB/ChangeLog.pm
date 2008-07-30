@@ -4,7 +4,7 @@ use base 'DBIx::Class';
 
 # __PACKAGE__->load_components(qw/Core/);
 __PACKAGE__->load_components(qw/Ordered Core/);
-__PACKAGE__->table('change_log');
+__PACKAGE__->table('changelog');
 
 __PACKAGE__->add_columns(
                          ID => {

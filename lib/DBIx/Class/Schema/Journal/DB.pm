@@ -10,10 +10,10 @@ __PACKAGE__->mk_group_accessors( simple => '_current_changeset_container' );
 DBIx::Class::Schema::Journal::DB->load_classes(qw/
                                                ChangeSet
                                                ChangeLog
-                                               AuditLog
                                                AuditHistory
                                                /);
 
+require DBIx::Class::Schema::Journal::DB::AuditLog;
 
 sub _current_changeset {
     my $self = shift;

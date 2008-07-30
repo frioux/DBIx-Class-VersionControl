@@ -131,11 +131,13 @@ sub create_journal_for
     my ($self, $s_name) = @_;
 
     my $source = $self->source($s_name);
-    my $newclass = $self->get_audit_log_class_name($s_name);
-    DBIx::Class::Componentised->inject_base($newclass, 'DBIx::Class::Schema::Journal::DB::AuditLog');
-    $newclass->table(lc($s_name) . "_audit_log");
+    my $logclass = $self->get_audit_log_class_name($s_name);
+
+    DBIx::Class::Componentised->inject_base($logclass, 'DBIx::Class::Schema::Journal::DB::AuditLog');
+    $logclass->journal_define_table($source);
+
     my $log_source = "${s_name}AuditLog";
-    $self->_journal_schema->register_class($log_source, $newclass);
+    $self->_journal_schema->register_class($log_source, $logclass);
                            
 
     my $histclass = $self->get_audit_history_class_name($s_name);

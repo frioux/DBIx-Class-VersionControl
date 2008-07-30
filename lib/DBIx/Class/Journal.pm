@@ -29,17 +29,9 @@ sub insert
     {
         my $s_name = $self->result_source->source_name();
         my $al = $self->result_source->schema->_journal_schema->resultset("${s_name}AuditLog");
-        my ($pri, $too_many) = map { $self->get_column($_)} $self->primary_columns;
-        if(defined $pri && defined $too_many) 
-        {
-            $self->throw_exception( "More than one possible key found for auto-inc on ".ref $self );
-        }
-        $pri ||= \'NULL';   #'
-        $al->create({
-            ID => $pri,
-#            created => {
-#                changeset => $self->result_source->schema->_journal_schema->current_changeset(),
-#            },
+        $al->update_or_create({
+            ( map { $_ => $self->get_column($_)} $self->primary_columns ),
+            created => { changeset_id => $al->result_source->schema->current_changeset },
         });
     }
 
@@ -57,22 +49,12 @@ sub delete
     {
         my $s_name = $self->result_source->source_name();
         my $al = $self->result_source->schema->_journal_schema->resultset("${s_name}AuditLog");
-        my ($pri, $too_many) = map { $self->get_column($_)} $self->primary_columns;
-        if(defined $pri && defined $too_many) 
-        {
-            $self->throw_exception( "More than one possible key found for auto-inc on ".ref $self );
-        }
-
-        if($pri)
-        {
-            my $alentry = $al->find({ID => $pri});
-            $self->throw_exception( "No audit_log entry found for ".ref($self) . " item $pri" ) if(!$alentry);
-             
-            ## bulk_update doesnt do "create new item on update of rel-accessor with hashref, yet
-            my $change = $self->result_source->schema->_journal_schema->resultset('ChangeLog')->create({ changeset_id => $self->result_source->schema->_journal_schema->current_changeset });
-            $alentry->delete_id($change->id);
-            $alentry->update();
-        }
+        my $alentry = $al->find_or_create({ map { $_ => $self->get_column($_)} $self->primary_columns });
+         
+        ## bulk_update doesnt do "create new item on update of rel-accessor with hashref, yet
+        my $change = $self->result_source->schema->_journal_schema->resultset('ChangeLog')->create({ changeset_id => $self->result_source->schema->_journal_schema->current_changeset });
+        $alentry->delete_id($change->id);
+        $alentry->update();
     }
     
 }

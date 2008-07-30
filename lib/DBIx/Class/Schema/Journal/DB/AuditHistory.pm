@@ -4,11 +4,11 @@ use base 'DBIx::Class::Schema::Journal::DB::Base';
 __PACKAGE__->table(__PACKAGE__->table);
 
 __PACKAGE__->add_columns(
-                           change_id => {
+                           audit_change_id => {
                                data_type => 'integer',
                                is_nullable => 0,
                            });
-__PACKAGE__->belongs_to('change', 'DBIx::Class::Schema::Journal::DB::ChangeLog', 'change_id');
+__PACKAGE__->belongs_to('change', 'DBIx::Class::Schema::Journal::DB::ChangeLog', 'audit_change_id');
 
 sub new
 {
