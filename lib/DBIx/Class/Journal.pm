@@ -167,17 +167,16 @@ change are added as a new row in this table.
 
 =over
 
-=item journal_connection
-
-=item Arguments: \@connect_info
+=item journal_connection \@connect_info
 
 Set the connection information for the database to save your audit
-information to. Leaving this blank assumes you want to store the audit
-data into your current database.
+information to.
 
-=item journal_sources
+Leaving this blank assumes you want to store the audit data into your current
+database. The storage object will be shared by the regular schema and the
+journalling schema.
 
-=item Arguments: \@source_names
+=item journal_sources \@source_names
 
 Set a list of source names you would like to audit, if unset, all
 sources are used.
@@ -185,43 +184,40 @@ sources are used.
 NOTE: Currently only sources with a single-column PK are supported, so
 use this method if you have sources with multi-column PKs.
 
-=item journal_storage_type
-
-=item Arguments: $storage_type
+=item journal_storage_type $type
 
 Enter the special storage type of your journal schema if needed. See
 L<DBIx::Class::Storage::DBI> for more information on storage types.
 
-=item journal_user
-
-=item Arguments: \@relation_args
+=item journal_user \@rel
 
 The user_id column in the L</ChangeSet> will be linked to your user id
 with a belongs_to relation, if this is set with the appropriate
 arguments.
 
-=item changeset_user
+=item journal_deploy_on_connect $bool
 
-=item Arguments: $user_id
+If set to a true value will cause C<journal_schema_deploy> to be called on
+C<connect>.
+
+Not reccomended, but present for backwards compatibility.
+
+=item changeset_user $user_id
 
 Set the user_id for the following changeset(s). This must be an integer.
 
-=item changeset_session
-
-=item Arguments: $user_id
+=item changeset_session $session_id
 
 Set the session_id for the following changeset(s). This must be an integer.
 
-=item txn_do
-
-=item Arguments: $code_ref
-
-=back
+=item txn_do $code_ref, @args
 
 Overloaded L<DBIx::Class::Schema/txn_do>, this must be used to start a
 new changeset to cover a group of changes. Each subsequent change to
 an audited table will use the changeset_id created in the most recent
 txn_do call.
+
+Currently nested C<txn_do> calls cause a single ChangeSet object to be created.
 
 =back
 
