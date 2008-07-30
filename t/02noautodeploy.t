@@ -21,7 +21,7 @@ isa_ok($schema->_journal_schema->source('CDAuditHistory'), 'DBIx::Class::ResultS
 isa_ok($schema->_journal_schema->source('ArtistAuditLog'), 'DBIx::Class::ResultSource', 'ArtistAuditLog source exists');
 
 my $count = eval { 
-	$schema->_journal_schema->resultset('ArtistAuditLog')->count;
+    $schema->_journal_schema->resultset('ArtistAuditLog')->count;
 };
 my $e = $@;
 
