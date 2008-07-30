@@ -7,15 +7,23 @@ sub journal_define_table {
 
     $class->load_components(qw(Core));
 
-    $class->table($source->name . "_audit_log");
+    $class->table($source->name . "_audit_history");
     
-    $class->add_column( audit_change_id => {
-        data_type => 'integer',
-        is_nullable => 0,
-        is_primary_key => 1,
-    });
+    $class->add_columns(
+        audit_history_id => {
+            data_type => 'integer',
+            is_nullable => 0,
+            is_primary_key => 1,
+            is_auto_increment => 1,
+        },
+        audit_change_id => {
+            data_type => 'integer',
+            is_nullable => 0,
+            is_foreign_key => 1,
+        },
+    );
 
-    $class->set_primary_key("audit_change_id");
+    $class->set_primary_key("audit_history_id");
 
     foreach my $column ( $source->columns ) {
         my $info = $source->column_info($column);
@@ -36,19 +44,5 @@ sub journal_define_table {
                            
     $class->belongs_to('change', 'DBIx::Class::Schema::Journal::DB::ChangeLog', 'audit_change_id');
 }
-
-sub new
-{
-    my ($self, $data, @rest) = @_;
-    my $source = $data->{-result_source};
-
-    $data->{change} = { 
-#        ID => \'DEFAULT',
-        changeset_id => $source->schema->current_changeset,
-        %{$data->{change}||{}}, 
-    };
-
-    $self->next::method($data, @rest);
-}                           
 
 1;

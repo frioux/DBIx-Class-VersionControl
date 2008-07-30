@@ -72,8 +72,9 @@ sub update
 
         my $obj = $self->result_source->resultset->find( $self->ident_condition );
         $ah->create({
-            $obj->get_columns
-            });
+            $obj->get_columns,
+            change => { changeset_id => $ah->result_source->schema->current_changeset },
+        });
     }
 
     $self->next::method($upd, @rest);
@@ -135,10 +136,10 @@ session_id, and a set_date which defaults to the current datetime.
 
 A ChangeSet has_many Changes.
 
-=item Change
+=item ChangeLog
 
 Each change/operation done in the transaction is recorded as a row in
-the Change table. It contains an auto-incrementing ID, the
+the ChangeLog table. It contains an auto-incrementing ID, the
 changeset_id and an order column for the ordering of each change in
 the changeset.
 
@@ -155,7 +156,7 @@ created or deleted this row.
 
 For every table in the original database to be audited, an
 AuditHistory table is created. Each row has a change_id field
-containing the ID of the Change row. The other fields correspond to
+containing the ID of the ChangeLog row. The other fields correspond to
 all the fields from the original table. Each time a column value in
 the original table is changed, the entire row contents before the
 change are added as a new row in this table.
