@@ -187,19 +187,19 @@ sub txn_do
 
         # wrap the thunk with a new changeset creation
         $code = sub {
-			my $changeset = $jschema->journal_create_changeset( parent_id => $current_changeset );
-			local $current_changeset_ref->{changeset} = $changeset->ID;
-			$user_code->(@_);
-		};
+            my $changeset = $jschema->journal_create_changeset( parent_id => $current_changeset );
+            local $current_changeset_ref->{changeset} = $changeset->id;
+            $user_code->(@_);
+        };
 
     }
 
-	if ( $jschema != $self ) {
-		my $inner_code = $code;
-		$code = sub { $jschema->txn_do($inner_code, @_) };
-	}
+    if ( $jschema->storage != $self->storage ) {
+        my $inner_code = $code;
+        $code = sub { $jschema->txn_do($inner_code, @_) };
+    }
 
-	return $self->next::method($code, @args);
+    return $self->next::method($code, @args);
 }
 
 sub changeset_user
