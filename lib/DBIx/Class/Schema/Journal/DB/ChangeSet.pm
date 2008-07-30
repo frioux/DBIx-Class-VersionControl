@@ -6,7 +6,7 @@ __PACKAGE__->load_components(qw/InflateColumn::DateTime Core/);
 __PACKAGE__->table('changeset');
 
 __PACKAGE__->add_columns(
-                         ID => {
+                         id => {
                              data_type => 'integer',
                              is_auto_increment => 1,
                              is_primary_key => 1,
@@ -20,7 +20,6 @@ __PACKAGE__->add_columns(
                          set_date => {
                              data_type => 'timestamp',
                              is_nullable => 0,
-                             default_value => 'now()',
                          },
                          session_id => {
                              data_type => 'varchar',
@@ -29,6 +28,12 @@ __PACKAGE__->add_columns(
                          },
                          );
 
-__PACKAGE__->set_primary_key('ID');
+sub new {
+    my $self = shift->next::method(@_);
+    $self->set_date(gmtime); # DateTime->now);
+    return $self;
+}
+
+__PACKAGE__->set_primary_key('id');
 
 1;
