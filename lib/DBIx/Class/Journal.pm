@@ -18,32 +18,46 @@ our $VERSION = '0.02_01';
 #     $class->next::method($attrs, @rest);
 # }
 
+sub journal_update_or_create_log_entry
+{
+    my ($self, $field ) = @_;
+    my $rs = $self->result_source;
+    my $s_name = $rs->source_name();
+
+    my $jschema = $rs->schema->_journal_schema;
+
+    my $al = $jschema->resultset("${s_name}AuditLog");
+
+    my %id = map { $_ => $self->get_column($_)} $self->primary_columns;
+
+    my %extra;
+
+    if ( $field ) {
+        $extra{$field} = $jschema->journal_create_change->id;
+    }
+
+    $al->update_or_create({ %extra, %id });
+}
+
 sub insert
+{
+    my ($self, @args) = @_;
+
+    return if($self->in_storage);
+
+    my $res = $self->next::method(@args);
+
+    $self->journal_log_insert();
+
+    return $res;
+}
+
+sub journal_log_insert
 {
     my ($self) = @_;
 
-    return if($self->in_storage);
-    ## create new transaction here?
-    my $res = $self->next::method();
-    if($self->in_storage)
-    {
-        my $s_name = $self->result_source->source_name();
-        my $al = $self->result_source->schema->_journal_schema->resultset("${s_name}AuditLog");
-
-        my %id = map { $_ => $self->get_column($_)} $self->primary_columns;
-
-        my $change = { changeset_id => $al->result_source->schema->current_changeset };
-
-        if ( my $log = $al->find(\%id) ) {
-            #$log->created($change); # FIXME should this work?
-            $log->created($al->related_resultset("created")->create($change));
-            $log->update;
-        } else {
-            $al->create({ %id, created => $change });
-        }
-    }
-
-    return $res;
+    $self->journal_update_or_create_log_entry('create_id')
+        if $self->in_storage;
 }
 
 ## On delete, update delete_id of AuditLog
@@ -52,24 +66,27 @@ sub delete
 {
     my ($self, @rest) = @_;
     $self->next::method(@rest);
+    $self->journal_log_delete(@rest);
+}
 
-    if(!$self->in_storage)
-    {
-        my $s_name = $self->result_source->source_name();
-        my $al = $self->result_source->schema->_journal_schema->resultset("${s_name}AuditLog");
-        my $alentry = $al->find_or_create({ map { $_ => $self->get_column($_)} $self->primary_columns });
-         
-        ## bulk_update doesnt do "create new item on update of rel-accessor with hashref, yet
-        my $change = $self->result_source->schema->_journal_schema->resultset('ChangeLog')->create({ changeset_id => $self->result_source->schema->_journal_schema->current_changeset });
-        $alentry->delete_id($change->id);
-        $alentry->update();
-    }
-    
+sub journal_log_delete
+{
+    my ($self) = @_;
+
+    $self->journal_update_or_create_log_entry('delete_id')
+        unless $self->in_storage;
 }
 
 ## On update, copy previous row's contents to AuditHistory
 
 sub update 
+{
+    my ($self, $upd, @rest) = @_;
+    $self->journal_log_update($upd, @rest);
+    $self->next::method($upd, @rest);
+}
+
+sub journal_log_update 
 {
     my ($self, $upd, @rest) = @_;
 
@@ -84,8 +101,6 @@ sub update
             change => { changeset_id => $ah->result_source->schema->current_changeset },
         });
     }
-
-    $self->next::method($upd, @rest);
 }
 
 =head1 NAME

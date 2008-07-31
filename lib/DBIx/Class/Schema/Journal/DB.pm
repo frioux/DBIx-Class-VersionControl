@@ -53,4 +53,9 @@ sub journal_create_changeset {
     $cs->create({ %changesetdata });
 }
 
+sub journal_create_change {
+    my $self = shift;
+    $self->resultset("ChangeLog")->create({ changeset_id => $self->current_changeset });
+}
+
 1;
