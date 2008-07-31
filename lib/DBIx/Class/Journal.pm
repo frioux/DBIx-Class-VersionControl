@@ -29,10 +29,18 @@ sub insert
     {
         my $s_name = $self->result_source->source_name();
         my $al = $self->result_source->schema->_journal_schema->resultset("${s_name}AuditLog");
-        $al->update_or_create({
-            ( map { $_ => $self->get_column($_)} $self->primary_columns ),
-            created => { changeset_id => $al->result_source->schema->current_changeset },
-        });
+
+        my %id = map { $_ => $self->get_column($_)} $self->primary_columns;
+
+        my $change = { changeset_id => $al->result_source->schema->current_changeset };
+
+        if ( my $log = $al->find(\%id) ) {
+            #$log->created($change); # FIXME should this work?
+            $log->created($al->related_resultset("created")->create($change));
+            $log->update;
+        } else {
+            $al->create({ %id, created => $change });
+        }
     }
 
     return $res;

@@ -10,7 +10,7 @@ BEGIN {
     eval "use DBD::SQLite";
     plan $@
         ? ( skip_all => 'needs DBD::SQLite for testing' )
-        : ( tests => 16 );
+        : ( tests => 21 );
 }
 
 my $schema = DBICTest->init_schema(no_populate => 1);
@@ -64,12 +64,35 @@ $schema->txn_do( sub {
     });
 } );
 
+
+my %id = map { $_ => $new_cd->get_column($_) } $new_cd->primary_columns;
+
 $schema->txn_do( sub {
     $new_cd->delete;
-} );
+});
 
-my $alentry = $search->find({ map { $_ => $new_cd->get_column($_) } $new_cd->primary_columns });
-ok(defined($alentry->deleted), 'Deleted set in audit_log');
+{
+    my $alentry = $search->find(\%id);
+    ok($alentry, "got log entry");
+    ok(defined($alentry->deleted), 'Deleted set in audit_log');
+    cmp_ok( $alentry->deleted->id, ">", $alentry->created->id, "deleted is after created" );
+}
+
+$new_cd = $schema->txn_do( sub {
+    $schema->resultset('CD')->create({
+        %id,
+        title => 'lalala',
+        artist => $artist,
+        year => 2000,
+    });
+});
+
+{
+    my $alentry = $search->find(\%id);
+    ok($alentry, "got log entry");
+    ok(defined($alentry->deleted), 'Deleted set in audit_log');
+    cmp_ok( $alentry->deleted->id, "<", $alentry->created->id, "deleted is before created (recreated)" );
+}
 
 $schema->changeset_user(1);
 $schema->txn_do( sub {
@@ -78,12 +101,12 @@ $schema->txn_do( sub {
         artist => $artist,
         year => 1999,
     });
-} );
+});
 
 ok($search->count > 1, 'Created an second entry in the CD audit history');
 
-my $cset = $schema->_journal_schema->resultset('ChangeSet')->find(5);
-is($cset->user_id, 1, 'Set user id for 5th changeset');
+my $cset = $schema->_journal_schema->resultset('ChangeSet')->find(6);
+is($cset->user_id, 1, 'Set user id for 6th changeset');
 
 $schema->changeset_session(1);
 $schema->txn_do( sub {
@@ -94,6 +117,8 @@ $schema->txn_do( sub {
     });
 } );
 
-my $cset2 = $schema->_journal_schema->resultset('ChangeSet')->find(6);
-is($cset2->session_id, 1, 'Set session id for 6th changeset');
+my $cset2 = $schema->_journal_schema->resultset('ChangeSet')->find(7);
+is($cset2->session_id, 1, 'Set session id for 7th changeset');
+
+
 
