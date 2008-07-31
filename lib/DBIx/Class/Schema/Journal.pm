@@ -11,6 +11,7 @@ __PACKAGE__->mk_classdata('journal_deploy_on_connect');
 __PACKAGE__->mk_classdata('journal_sources'); ## [ source names ]
 __PACKAGE__->mk_classdata('journal_user'); ## [ class, field for user id ]
 __PACKAGE__->mk_classdata('_journal_schema'); ## schema object for journal
+__PACKAGE__->mk_classdata('journal_component');
 __PACKAGE__->mk_classdata('journal_nested_changesets');
 
 use strict;
@@ -59,6 +60,7 @@ sub connection
 
     $self->_journal_schema($journal_schema);
 
+    my $comp = $self->journal_component || "Journal";
 
     ## Create auditlog+history per table
     my %j_sources = map { $_ => 1 } $self->journal_sources
@@ -69,7 +71,7 @@ sub connection
     {
         next unless($j_sources{$s_name});
         $self->create_journal_for($s_name);
-        $self->class($s_name)->load_components('Journal');
+        $self->class($s_name)->load_components($comp);
 #        print STDERR "$s_name :", $self->class($s_name), "\n";
     }
 
