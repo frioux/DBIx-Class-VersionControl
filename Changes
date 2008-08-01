@@ -1,3 +1,12 @@
+    - insert records a history row as well
+    - SQL::Translator is required to run the test suite
+    - Add EvalWrap subclass, that suppressed errors and warns instead, useful
+      for when having no errors is preferable over partial journal data
+    - various refactoring
+    - correct journalling of recreated data (data with a primary key that
+      previously existed)
+    - update to DBIx::Class's versioning scheme
+
 0.02_01 2008-07-30
     - deployment at connect time is disabled by default, set journal_auto_deploy to reenable
     - $main_schema->deploy deploys the journalling tables too
