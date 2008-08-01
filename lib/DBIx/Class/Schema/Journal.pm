@@ -10,7 +10,7 @@ __PACKAGE__->mk_classdata('journal_connection');
 __PACKAGE__->mk_classdata('journal_deploy_on_connect');
 __PACKAGE__->mk_classdata('journal_sources'); ## [ source names ]
 __PACKAGE__->mk_classdata('journal_user'); ## [ class, field for user id ]
-__PACKAGE__->mk_classdata('journal_single_schema');
+__PACKAGE__->mk_classdata('journal_copy_sources');
 __PACKAGE__->mk_classdata('__journal_schema_prototype');
 __PACKAGE__->mk_classdata('_journal_schema'); ## schema object for journal
 __PACKAGE__->mk_classdata('journal_component');
@@ -47,13 +47,28 @@ sub _journal_schema_prototype
     {
           return $proto;
     }
-    $self->__journal_schema_prototype
+    my $proto = $self->__journal_schema_prototype
     (
         DBIx::Class::Schema::Journal::DB->compose_namespace
         (
-            blessed($self) . '::Journal'
+            (blessed($self)||$self) . '::Journal'
         )
     );
+    my $comp = $self->journal_component || "Journal";
+
+    ## Create auditlog+history per table
+    my %j_sources = map { $_ => 1 } $self->journal_sources
+                                      ? @{$self->journal_sources}
+                                      : $self->sources;
+
+    foreach my $s_name ($self->sources)
+    {
+        next unless($j_sources{$s_name});
+        $self->create_journal_for($s_name => $proto);
+        $self->class($s_name)->load_components($comp);
+#        print STDERR "$s_name :", $self->class($s_name), "\n";
+    }
+    return $proto;
 }
 
 sub connection
@@ -63,7 +78,7 @@ sub connection
 
 #   print STDERR join(":", $self->sources), "\n";
 
-    my $journal_schema = $self->_journal_schema_prototype;
+    my $journal_schema = (ref $self||$self)->_journal_schema_prototype->clone;
 
     if($self->journal_connection)
     {
@@ -78,20 +93,6 @@ sub connection
 
     $self->_journal_schema($journal_schema);
 
-    my $comp = $self->journal_component || "Journal";
-
-    ## Create auditlog+history per table
-    my %j_sources = map { $_ => 1 } $self->journal_sources
-                                      ? @{$self->journal_sources}
-                                      : $self->sources;
-
-    foreach my $s_name ($self->sources)
-    {
-        next unless($j_sources{$s_name});
-        $self->create_journal_for($s_name);
-        $self->class($s_name)->load_components($comp);
-#        print STDERR "$s_name :", $self->class($s_name), "\n";
-    }
 
     if ( $self->journal_nested_changesets ) {
         $self->_journal_schema->nested_changesets(1);
@@ -132,19 +133,24 @@ sub journal_schema_deploy
 
 sub create_journal_for
 {
-    my ($self, $s_name) = @_;
+    my ($self, $s_name, $journal_schema) = @_;
 
     my $source = $self->source($s_name);
 
     foreach my $audit (qw(AuditLog AuditHistory)) {
         my $audit_source = join("", $s_name, $audit);
-        my $class = blessed($self->_journal_schema) . "::$audit_source";
+        my $class = blessed($journal_schema) . "::$audit_source";
 
         DBIx::Class::Componentised->inject_base($class, "DBIx::Class::Schema::Journal::DB::$audit");
 
         $class->journal_define_table($source);
 
-        $self->_journal_schema->register_class($audit_source, $class);
+        $journal_schema->register_class($audit_source, $class);
+
+        if ($self->journal_copy_sources)
+        {
+            $self->register_class($audit_source, $class);
+        }
     }
 }
 
