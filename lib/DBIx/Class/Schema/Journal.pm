@@ -10,6 +10,8 @@ __PACKAGE__->mk_classdata('journal_connection');
 __PACKAGE__->mk_classdata('journal_deploy_on_connect');
 __PACKAGE__->mk_classdata('journal_sources'); ## [ source names ]
 __PACKAGE__->mk_classdata('journal_user'); ## [ class, field for user id ]
+__PACKAGE__->mk_classdata('journal_single_schema');
+__PACKAGE__->mk_classdata('__journal_schema_prototype');
 __PACKAGE__->mk_classdata('_journal_schema'); ## schema object for journal
 __PACKAGE__->mk_classdata('journal_component');
 __PACKAGE__->mk_classdata('journal_nested_changesets');
@@ -38,6 +40,22 @@ use warnings;
     
 # }
 
+sub _journal_schema_prototype
+{
+    my $self = shift;
+    if (my $proto = $self->__journal_schema_prototype)
+    {
+          return $proto;
+    }
+    $self->__journal_schema_prototype
+    (
+        DBIx::Class::Schema::Journal::DB->compose_namespace
+        (
+            blessed($self) . '::Journal'
+        )
+    );
+}
+
 sub connection
 {
     my $self = shift;
@@ -45,7 +63,7 @@ sub connection
 
 #   print STDERR join(":", $self->sources), "\n";
 
-    my $journal_schema = DBIx::Class::Schema::Journal::DB->compose_namespace(blessed($self) . '::Journal');
+    my $journal_schema = $self->_journal_schema_prototype;
 
     if($self->journal_connection)
     {
