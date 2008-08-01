@@ -10,7 +10,7 @@ BEGIN {
     eval "use DBD::SQLite; use SQL::Translator";
     plan $@
         ? ( skip_all => 'needs DBD::SQLite and SQL::Translator for testing' )
-        : ( tests => 21 );
+        : ( tests => 8 );
 }
 
 my $schema = DBICTest->init_schema(no_populate => 1, no_deploy => 1);
