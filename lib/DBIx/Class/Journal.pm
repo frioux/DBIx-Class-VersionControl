@@ -18,25 +18,9 @@ our $VERSION = '0.02_01';
 #     $class->next::method($attrs, @rest);
 # }
 
-sub journal_update_or_create_log_entry
-{
-    my ($self, $field ) = @_;
-    my $rs = $self->result_source;
-    my $s_name = $rs->source_name();
-
-    my $jschema = $rs->schema->_journal_schema;
-
-    my $al = $jschema->resultset("${s_name}AuditLog");
-
-    my %id = map { $_ => $self->get_column($_)} $self->primary_columns;
-
-    my %extra;
-
-    if ( $field ) {
-        $extra{$field} = $jschema->journal_create_change->id;
-    }
-
-    $al->update_or_create({ %extra, %id });
+sub _journal_schema {
+    my $self = shift;
+    $self->result_source->schema->_journal_schema;
 }
 
 sub insert
@@ -56,8 +40,12 @@ sub journal_log_insert
 {
     my ($self) = @_;
 
-    $self->journal_update_or_create_log_entry('create_id')
-        if $self->in_storage;
+    if ( $self->in_storage ) {
+        my $j = $self->_journal_schema;
+        my $change_id = $j->journal_create_change()->id;
+        $j->journal_update_or_create_log_entry( $self, create_id => $change_id );
+        $j->journal_record_in_history( $self, audit_change_id => $change_id );
+    }
 }
 
 ## On delete, update delete_id of AuditLog
@@ -73,8 +61,10 @@ sub journal_log_delete
 {
     my ($self) = @_;
 
-    $self->journal_update_or_create_log_entry('delete_id')
-        unless $self->in_storage;
+    unless ($self->in_storage) {
+        my $j = $self->_journal_schema;
+        $j->journal_update_or_create_log_entry( $self, delete_id => $j->journal_create_change->id );
+    }
 }
 
 ## On update, copy previous row's contents to AuditHistory
@@ -92,14 +82,11 @@ sub journal_log_update
 
     if($self->in_storage)
     {
-        my $s_name = $self->result_source->source_name();
-        my $ah = $self->result_source->schema->_journal_schema->resultset("${s_name}AuditHistory");
+        my $j = $self->_journal_schema;
 
-        my $obj = $self->result_source->resultset->find( $self->ident_condition );
-        $ah->create({
-            $obj->get_columns,
-            change => { changeset_id => $ah->result_source->schema->current_changeset },
-        });
+        my $change = $j->journal_create_change;
+        my $prev = $self->result_source->resultset->find( $self->ident_condition );
+        $j->journal_record_in_history( $prev, audit_change_id => $change );
     }
 }
 

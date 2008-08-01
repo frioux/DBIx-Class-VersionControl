@@ -58,4 +58,25 @@ sub journal_create_change {
     $self->resultset("ChangeLog")->create({ changeset_id => $self->current_changeset });
 }
 
+sub journal_update_or_create_log_entry
+{
+    my ($self, $row, @cols) = @_;
+
+    my $s_name = $row->result_source->source_name;
+
+    my %id = map { $_ => $row->get_column($_)} $row->primary_columns;
+
+    $self->resultset("${s_name}AuditLog")->update_or_create({ @cols, %id });
+}
+
+sub journal_record_in_history
+{
+    my ($self, $row, @cols) = @_;
+
+    my $s_name = $row->result_source->source_name;
+
+    $self->resultset("${s_name}AuditHistory")->create({ $row->get_columns, @cols });
+}
+
+
 1;
