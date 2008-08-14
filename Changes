@@ -1,3 +1,7 @@
+0.900001_02
+    - The one time I forget to run disttest, the MANIFEST file mysteriously
+      disappears... *sigh*
+
 0.900001_01
     - insert records a history row as well
     - SQL::Translator is required to run the test suite
