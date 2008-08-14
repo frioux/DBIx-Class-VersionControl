@@ -1,3 +1,4 @@
+0.900001_01
     - insert records a history row as well
     - SQL::Translator is required to run the test suite
     - Add EvalWrap subclass, that suppressed errors and warns instead, useful
