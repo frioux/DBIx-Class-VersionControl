@@ -9,3 +9,5 @@ $history->restore;
 $changeset->rollback; # all up to this point?
 $changeset->reverse; # only this one
 
+why isn't this a Module::Install based app?
+add Test/TempDir.pm to build_requires
