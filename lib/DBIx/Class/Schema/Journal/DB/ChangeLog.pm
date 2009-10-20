@@ -2,7 +2,6 @@ package DBIx::Class::Schema::Journal::DB::ChangeLog;
 
 use base 'DBIx::Class';
 
-# __PACKAGE__->load_components(qw/Core/);
 __PACKAGE__->load_components(qw/Ordered Core/);
 __PACKAGE__->table('changelog');
 

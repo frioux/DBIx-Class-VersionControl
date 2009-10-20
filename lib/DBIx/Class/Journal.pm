@@ -9,15 +9,6 @@ our $VERSION = '0.900001_02';
 
 ## On create/insert, add new entry to AuditLog
 
-# sub new
-# {
-#     my ($class, $attrs, @rest) = @_;
-
-#     $class->result_source->schema->_journal_schema->current_user(delete $attrs->{user_id});
-
-#     $class->next::method($attrs, @rest);
-# }
-
 sub _journal_schema {
     my $self = shift;
     $self->result_source->schema->_journal_schema;
@@ -69,14 +60,14 @@ sub journal_log_delete
 
 ## On update, copy previous row's contents to AuditHistory
 
-sub update 
+sub update
 {
     my ($self, $upd, @rest) = @_;
     $self->journal_log_update($upd, @rest);
     $self->next::method($upd, @rest);
 }
 
-sub journal_log_update 
+sub journal_log_update
 {
     my ($self, $upd, @rest) = @_;
 
@@ -135,7 +126,7 @@ change, use C<< $schema->_journal_schema >>.
 
 =head2 TABLES
 
-The journal schema contains a number of tables. 
+The journal schema contains a number of tables.
 
 =over
 

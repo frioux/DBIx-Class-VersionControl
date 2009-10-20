@@ -19,26 +19,6 @@ __PACKAGE__->mk_classdata('journal_nested_changesets');
 use strict;
 use warnings;
 
-# sub throw_exception
-# {
-# }
-
-# sub exception_action
-# {
-#     my $self = shift;
-# #    print STDERR Carp::longmess;
-    
-#     $self->next::method(@_);
-# }
-
-# sub load_classes
-# {
-#     my $class = shift;
-
-
-#     $class->next::method(@_);
-    
-# }
 
 sub _journal_schema_prototype
 {
@@ -66,7 +46,6 @@ sub _journal_schema_prototype
         next unless($j_sources{$s_name});
         $self->create_journal_for($s_name => $proto);
         $self->class($s_name)->load_components($comp);
-#        print STDERR "$s_name :", $self->class($s_name), "\n";
     }
     return $proto;
 }
@@ -75,8 +54,6 @@ sub connection
 {
     my $self = shift;
     my $schema = $self->next::method(@_);
-
-#   print STDERR join(":", $self->sources), "\n";
 
     my $journal_schema = (ref $self||$self)->_journal_schema_prototype->clone;
 

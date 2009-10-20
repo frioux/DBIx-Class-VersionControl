@@ -30,7 +30,7 @@ __PACKAGE__->add_columns(
 
 sub new {
     my $self = shift->next::method(@_);
-    $self->set_date(gmtime); # DateTime->now);
+    $self->set_date(gmtime);
     return $self;
 }
 
