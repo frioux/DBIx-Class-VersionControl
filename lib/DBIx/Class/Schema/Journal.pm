@@ -116,7 +116,7 @@ sub create_journal_for
     my $source = $self->source($s_name);
 
     foreach my $audit (qw(AuditLog AuditHistory)) {
-        my $audit_source = join("", $s_name, $audit);
+        my $audit_source = $s_name.$audit;
         my $class = blessed($journal_schema) . "::$audit_source";
 
 		  Class::C3::Componentised->inject_base($class, "DBIx::Class::Schema::Journal::DB::$audit");
