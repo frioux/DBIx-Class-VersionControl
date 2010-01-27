@@ -1,14 +1,12 @@
 package DBIx::Class::Schema::Journal::DB::AuditHistory;
 
-use base 'DBIx::Class';
+use base 'DBIx::Class::Core';
 
 sub journal_define_table {
     my ( $class, $source ) = @_;
 
-    $class->load_components(qw(Core));
+    $class->table($source->name . '_audit_history');
 
-    $class->table($source->name . "_audit_history");
-    
     $class->add_columns(
         audit_history_id => {
             data_type => 'integer',
@@ -23,7 +21,7 @@ sub journal_define_table {
         },
     );
 
-    $class->set_primary_key("audit_history_id");
+    $class->set_primary_key('audit_history_id');
 
     foreach my $column ( $source->columns ) {
         my $info = $source->column_info($column);
@@ -36,13 +34,13 @@ sub journal_define_table {
             is_auto_increment
             default_value
         );
-        
+
         $hist_info{is_nullable} = 1;
 
         $class->add_column($column => \%hist_info);
     }
-                           
-    $class->belongs_to('change', 'DBIx::Class::Schema::Journal::DB::ChangeLog', 'audit_change_id');
+
+    $class->belongs_to(change => 'DBIx::Class::Schema::Journal::DB::ChangeLog', 'audit_change_id');
 }
 
 1;

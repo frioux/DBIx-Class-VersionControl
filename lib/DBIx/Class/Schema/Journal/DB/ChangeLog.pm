@@ -1,27 +1,27 @@
 package DBIx::Class::Schema::Journal::DB::ChangeLog;
 
-use base 'DBIx::Class';
+use base 'DBIx::Class::Core';
 
-__PACKAGE__->load_components(qw/Ordered Core/);
+__PACKAGE__->load_components(qw/Ordered/);
 __PACKAGE__->table('changelog');
 
 __PACKAGE__->add_columns(
-                         ID => {
-                             data_type => 'integer',
-                             is_auto_increment => 1,
-                             is_primary_key => 1,
-                             is_nullable => 0,
-                         },
-                         changeset_id => {
-                             data_type => 'integer',
-                             is_nullable => 0,
-                             is_foreign_key => 1,
-                         },
-                         order_in => {
-                             data_type => 'integer',
-                             is_nullable => 0,
-                         },
-                         );
+	ID => {
+		data_type => 'integer',
+		is_auto_increment => 1,
+		is_primary_key => 1,
+		is_nullable => 0,
+	},
+		changeset_id => {
+		data_type => 'integer',
+		is_nullable => 0,
+		is_foreign_key => 1,
+	},
+	order_in => {
+		data_type => 'integer',
+		is_nullable => 0,
+	},
+);
 
 
 __PACKAGE__->set_primary_key('ID');
@@ -30,4 +30,5 @@ __PACKAGE__->belongs_to('changeset', 'DBIx::Class::Schema::Journal::DB::ChangeSe
 
  __PACKAGE__->position_column('order_in');
  __PACKAGE__->grouping_column('changeset_id');
+
 1;

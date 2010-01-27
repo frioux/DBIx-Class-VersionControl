@@ -1,13 +1,11 @@
 package DBIx::Class::Schema::Journal::DB::AuditLog;
 
-use base 'DBIx::Class';
+use base 'DBIx::Class::Core';
 
 sub journal_define_table {
     my ( $class, $source ) = @_;
 
-    $class->load_components(qw(Core));
-
-    $class->table($source->name . "_audit_log");
+    $class->table($source->name . '_audit_log');
 
     $class->add_columns(
         create_id => {
@@ -28,8 +26,8 @@ sub journal_define_table {
 
     $class->set_primary_key( $source->primary_columns );
 
-    $class->belongs_to('created', 'DBIx::Class::Schema::Journal::DB::ChangeLog', 'create_id');
-    $class->belongs_to('deleted', 'DBIx::Class::Schema::Journal::DB::ChangeLog', 'delete_id');
+    $class->belongs_to(created => 'DBIx::Class::Schema::Journal::DB::ChangeLog', 'create_id');
+    $class->belongs_to(deleted => 'DBIx::Class::Schema::Journal::DB::ChangeLog', 'delete_id');
 }
 
 1;
