@@ -1,7 +1,5 @@
-package # hide from PAUSE 
+package # hide from PAUSE
     DBICTest;
-
-use Test::TempDir;
 
 use strict;
 use warnings;
@@ -16,12 +14,12 @@ DBICTest - Library to be used by DBIx::Class test scripts.
   use lib qw(t/lib);
   use DBICTest;
   use Test::More;
-  
+
   my $schema = DBICTest->init_schema();
 
 =head1 DESCRIPTION
 
-This module provides the basic utilities to write tests against 
+This module provides the basic utilities to write tests against
 DBIx::Class.
 
 =head1 METHODS
@@ -31,45 +29,81 @@ DBIx::Class.
   my $schema = DBICTest->init_schema(
     no_deploy=>1,
     no_populate=>1,
+    storage_type=>'::DBI::Replicated',
+    storage_type_args=>{
+      balancer_type=>'DBIx::Class::Storage::DBI::Replicated::Balancer::Random'
+    },
   );
 
-This method removes the test SQLite database in t/var/DBIxClass.db 
+This method removes the test SQLite database in t/var/DBIxClass.db
 and then creates a new, empty database.
 
-This method will call deploy_schema() by default, unless the 
+This method will call deploy_schema() by default, unless the
 no_deploy flag is set.
 
-Also, by default, this method will call populate_schema() by 
+Also, by default, this method will call populate_schema() by
 default, unless the no_deploy or no_populate flags are set.
 
 =cut
 
-sub init_schema {
+sub has_custom_dsn {
+    return $ENV{"DBICTEST_DSN"} ? 1:0;
+}
+
+sub _sqlite_dbfilename {
+    return "t/var/DBIxClass.db";
+}
+
+sub _sqlite_dbname {
     my $self = shift;
     my %args = @_;
-    my $db_file = temp_root->file("main.db");
+    return $self->_sqlite_dbfilename if $args{sqlite_use_file} or $ENV{"DBICTEST_SQLITE_USE_FILE"};
+    return ":memory:";
+}
+
+sub _database {
+    my $self = shift;
+    my %args = @_;
+    my $db_file = $self->_sqlite_dbname(%args);
+
+    unlink($db_file) if -e $db_file;
+    unlink($db_file . "-journal") if -e $db_file . "-journal";
+    mkdir("t/var") unless -d "t/var";
 
     my $dsn = $ENV{"DBICTEST_DSN"} || "dbi:SQLite:${db_file}";
     my $dbuser = $ENV{"DBICTEST_DBUSER"} || '';
     my $dbpass = $ENV{"DBICTEST_DBPASS"} || '';
 
+    my @connect_info = ($dsn, $dbuser, $dbpass, { AutoCommit => 1, %args });
+
+    return @connect_info;
+}
+
+sub init_schema {
+    my $self = shift;
+    my %args = @_;
+
     my $schema;
-    my @connect_info = ($dsn, $dbuser, $dbpass, { AutoCommit => 1 });
 
     if ($args{compose_connection}) {
       $schema = DBICTest::Schema->compose_connection(
-                  'DBICTest', @connect_info
+                  'DBICTest', $self->_database(%args)
                 );
     } else {
       $schema = DBICTest::Schema->compose_namespace('DBICTest')
-                                ->connect(@connect_info);
-    print STDERR "Created Schema: ", ref($schema), "\n";
     }
-#    my $schema = DBICTest::Schema->compose_connection('DBICTest' => $dsn, $dbuser, $dbpass);
-#    $schema->storage->on_connect_do(['PRAGMA synchronous = OFF']);
+    if( $args{storage_type}) {
+      $schema->storage_type($args{storage_type});
+    }
+    if ( !$args{no_connect} ) {
+      $schema = $schema->connect($self->_database(%args));
+      $schema->storage->on_connect_do(['PRAGMA synchronous = OFF'])
+       unless $self->has_custom_dsn;
+    }
     if ( !$args{no_deploy} ) {
-        __PACKAGE__->deploy_schema( $schema );
-        __PACKAGE__->populate_schema( $schema ) if( !$args{no_populate} );
+        __PACKAGE__->deploy_schema( $schema, $args{deploy_args} );
+        __PACKAGE__->populate_schema( $schema )
+         if( !$args{no_populate} );
     }
     return $schema;
 }
@@ -78,10 +112,10 @@ sub init_schema {
 
   DBICTest->deploy_schema( $schema );
 
-This method does one of two things to the schema.  It can either call 
-the experimental $schema->deploy() if the DBICTEST_SQLT_DEPLOY environment 
-variable is set, otherwise the default is to read in the t/lib/sqlite.sql 
-file and execute the SQL within. Either way you end up with a fresh set 
+This method does one of two things to the schema.  It can either call
+the experimental $schema->deploy() if the DBICTEST_SQLT_DEPLOY environment
+variable is set, otherwise the default is to read in the t/lib/sqlite.sql
+file and execute the SQL within. Either way you end up with a fresh set
 of tables for testing.
 
 =cut
@@ -90,22 +124,14 @@ sub deploy_schema {
     my $self = shift;
     my $schema = shift;
 
-#    if ($ENV{"DBICTEST_SQLT_DEPLOY"}) {
-        return $schema->deploy();
-#     } else {
-#         open IN, "t/lib/sqlite.sql";
-#         my $sql;
-#         { local $/ = undef; $sql = <IN>; }
-#         close IN;
-#         ($schema->storage->dbh->do($_) || print "Error on SQL: $_\n") for split(/;\n/, $sql);
-#     }
+	 return $schema->deploy();
 }
 
 =head2 populate_schema
 
   DBICTest->populate_schema( $schema );
 
-After you deploy your schema you can use this method to populate 
+After you deploy your schema you can use this method to populate
 the tables with test data.
 
 =cut
