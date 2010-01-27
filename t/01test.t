@@ -1,10 +1,9 @@
 use strict;
-use warnings;  
+use warnings;
 
 use Test::More;
 use lib qw(t/lib);
 use DBICTest;
-use Data::Dumper;
 
 BEGIN {
     eval "use DBD::SQLite; use SQL::Translator";
