@@ -4,6 +4,7 @@ use base qw/DBIx::Class/;
 
 use Scalar::Util 'blessed';
 use DBIx::Class::Schema::Journal::DB;
+use Class::C3::Componentised ();
 
 __PACKAGE__->mk_classdata('journal_storage_type');
 __PACKAGE__->mk_classdata('journal_connection');
@@ -118,7 +119,7 @@ sub create_journal_for
         my $audit_source = join("", $s_name, $audit);
         my $class = blessed($journal_schema) . "::$audit_source";
 
-        DBIx::Class::Componentised->inject_base($class, "DBIx::Class::Schema::Journal::DB::$audit");
+		  Class::C3::Componentised->inject_base($class, "DBIx::Class::Schema::Journal::DB::$audit");
 
         $class->journal_define_table($source);
 
