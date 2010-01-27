@@ -6,6 +6,7 @@ use strict;
 use warnings;
 
 our $VERSION = '0.900001_02';
+$VERSION = eval $VERSION; # no errors in dev versions
 
 ## On create/insert, add new entry to AuditLog
 
@@ -87,21 +88,21 @@ DBIx::Class::Journal - auditing for tables managed by DBIx::Class
 
 =head1 SYNOPSIS
 
-  package My::Schema;
-  use base 'DBIx::Class::Schema';
+ package My::Schema;
+ use base 'DBIx::Class::Schema';
 
-  __PACKAGE__->load_components(qw/+DBIx::Class::Schema::Journal/);
+ __PACKAGE__->load_components(qw/Schema::Journal/);
 
-  __PACKAGE__->journal_connection(['dbi:SQLite:t/var/Audit.db']);
-  __PACKAGE__->journal_user(['My::Schema::User', {'foreign.userid' => 'self.user_id'}]);
+ __PACKAGE__->journal_connection(['dbi:SQLite:t/var/Audit.db']);
+ __PACKAGE__->journal_user(['My::Schema::User', {'foreign.userid' => 'self.user_id'}]);
 
 
- ########
+ #######
 
-  $schema->changeset_user($user->id);
-  my $new_artist = $schema->txn_do( sub {
-   return = $schema->resultset('Artist')->create({ name => 'Fred' });
-  });
+ $schema->changeset_user($user->id);
+ my $new_artist = $schema->txn_do( sub {
+    return $schema->resultset('Artist')->create({ name => 'Fred' });
+ });
 
 
 =head1 DESCRIPTION
@@ -113,7 +114,7 @@ create/update/delete operation an id. The creation and deletion date
 of each row is stored, as well as the previous contents of any row
 that gets changed.
 
-All queries which want auditing should be called using
+All queries which need auditing must be called using
 L<DBIx::Class::Schema/txn_do>, which is used to create changesets for
 each transaction.
 
