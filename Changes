@@ -1,3 +1,13 @@
+0.900001_03 2010-02-18
+    - Journal schema is now in it's own virtual package instead of being in
+      DBIx::Class::Schema::Journal::DB so a user should be able to have
+      multiple journals without them mingling
+    - No longer depend on Test::TempDir so this should build on windows
+    - Use Class::C3::Componentised instead of DBIx::Class::Componentised
+    - Fixed syntax error in SYNOPSIS
+    - Lots of cleanup (deleting unused files, commented out code, etc)
+    - Switched to Module::Install instead of EU::MM
+
 0.900001_02
     - The one time I forget to run disttest, the MANIFEST file mysteriously
       disappears... *sigh*

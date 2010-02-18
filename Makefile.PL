@@ -13,7 +13,7 @@ all_from 'lib/DBIx/Class/Journal.pm';
 
 test_requires 'Test::More'          => '0.94';
 test_requires 'DBD::SQLite'         => '1.29';
-test_requires 'SQL::Translator'     => '0.1103'; # we'll make this optional for release
+test_requires 'SQL::Translator'     => '0.11003'; # we'll make this optional for release
 
 requires 'DBIx::Class'              => '0.08115';
 requires 'Class::C3::Componentised' => '1.0006';
