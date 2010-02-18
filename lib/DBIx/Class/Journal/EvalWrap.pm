@@ -1,5 +1,3 @@
-#!/usr/bin/perl
-
 package DBIx::Class::Journal::EvalWrap;
 use base qw(DBIx::Class::Journal);
 
