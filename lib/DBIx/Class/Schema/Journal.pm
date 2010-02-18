@@ -28,11 +28,14 @@ sub _journal_schema_prototype
     {
           return $proto;
     }
+    my $c = blessed($self)||$self;
+    my $journal_schema_class = "${c}::_JOURNAL";
+    Class::C3::Componentised->inject_base($journal_schema_class, 'DBIx::Class::Schema::Journal::DB');
     my $proto = $self->__journal_schema_prototype
     (
-        DBIx::Class::Schema::Journal::DB->compose_namespace
+        $journal_schema_class->compose_namespace
         (
-            (blessed($self)||$self) . '::Journal'
+            $c.'::Journal'
         )
     );
     my $comp = $self->journal_component || "Journal";
@@ -119,7 +122,7 @@ sub create_journal_for
         my $audit_source = $s_name.$audit;
         my $class = blessed($journal_schema) . "::$audit_source";
 
-		  Class::C3::Componentised->inject_base($class, "DBIx::Class::Schema::Journal::DB::$audit");
+        Class::C3::Componentised->inject_base($class, "DBIx::Class::Schema::Journal::DB::$audit");
 
         $class->journal_define_table($source);
 
