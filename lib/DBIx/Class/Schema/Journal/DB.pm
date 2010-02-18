@@ -22,11 +22,15 @@ sub _current_changeset {
 sub current_changeset {
     my ( $self, @args ) = @_;
 
-    $self->throw_exception("setting current_changeset is not supported, use txn_do to create a new changeset") if @args;
+    $self->throw_exception(
+       'setting current_changeset is not supported, use txn_do to create a new changeset'
+    ) if @args;
 
     my $id = $self->_current_changeset;
 
-    $self->throw_exception("Can't call current_changeset outside of a transaction") unless $id;
+    $self->throw_exception(
+       q{Can't call current_changeset outside of a transaction}
+    ) unless $id;
 
     return $id;
 }
@@ -38,12 +42,10 @@ sub journal_create_changeset {
 
     delete $changesetdata{parent_id} unless $self->nested_changesets;
 
-    if( defined( my $user = $self->current_user() ) )
-    {
+    if( defined( my $user = $self->current_user() ) ) {
         $changesetdata{user_id} = $user;
     }
-    if( defined( my $session = $self->current_session() ) )
-    {
+    if( defined( my $session = $self->current_session() ) ) {
         $changesetdata{session_id} = $session;
     }
 
@@ -55,11 +57,12 @@ sub journal_create_changeset {
 
 sub journal_create_change {
     my $self = shift;
-    $self->resultset("ChangeLog")->create({ changeset_id => $self->current_changeset });
+    $self->resultset('ChangeLog')->create({
+       changeset_id => $self->current_changeset
+    });
 }
 
-sub journal_update_or_create_log_entry
-{
+sub journal_update_or_create_log_entry {
     my ($self, $row, @cols) = @_;
 
     my $s_name = $row->result_source->source_name;
@@ -69,8 +72,7 @@ sub journal_update_or_create_log_entry
     $self->resultset("${s_name}AuditLog")->update_or_create({ @cols, %id });
 }
 
-sub journal_record_in_history
-{
+sub journal_record_in_history {
     my ($self, $row, @cols) = @_;
 
     my $s_name = $row->result_source->source_name;

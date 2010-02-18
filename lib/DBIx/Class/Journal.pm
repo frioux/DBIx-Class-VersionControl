@@ -15,21 +15,19 @@ sub _journal_schema {
     $self->result_source->schema->_journal_schema;
 }
 
-sub insert
-{
+sub insert {
     my ($self, @args) = @_;
 
-    return if($self->in_storage);
+    return if $self->in_storage;
 
     my $res = $self->next::method(@args);
 
-    $self->journal_log_insert();
+    $self->journal_log_insert;
 
     return $res;
 }
 
-sub journal_log_insert
-{
+sub journal_log_insert {
     my ($self) = @_;
 
     if ( $self->in_storage ) {
@@ -42,15 +40,13 @@ sub journal_log_insert
 
 ## On delete, update delete_id of AuditLog
 
-sub delete
-{
-    my ($self, @rest) = @_;
-    $self->next::method(@rest);
-    $self->journal_log_delete(@rest);
+sub delete {
+    my $self = shift;
+    $self->next::method(@_);
+    $self->journal_log_delete(@_);
 }
 
-sub journal_log_delete
-{
+sub journal_log_delete {
     my ($self) = @_;
 
     unless ($self->in_storage) {
@@ -61,19 +57,16 @@ sub journal_log_delete
 
 ## On update, copy previous row's contents to AuditHistory
 
-sub update
-{
-    my ($self, $upd, @rest) = @_;
-    $self->journal_log_update($upd, @rest);
-    $self->next::method($upd, @rest);
+sub update {
+    my $self = shift;
+    $self->journal_log_update(@_);
+    $self->next::method(@_);
 }
 
-sub journal_log_update
-{
-    my ($self, $upd, @rest) = @_;
+sub journal_log_update {
+    my $self = shift;
 
-    if($self->in_storage)
-    {
+    if($self->in_storage) {
         my $j = $self->_journal_schema;
 
         my $change = $j->journal_create_change;
