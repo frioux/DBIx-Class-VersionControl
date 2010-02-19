@@ -15,6 +15,7 @@ __PACKAGE__->mk_classdata('journal_copy_sources');
 __PACKAGE__->mk_classdata('__journal_schema_prototype');
 __PACKAGE__->mk_classdata('_journal_schema'); ## schema object for journal
 __PACKAGE__->mk_classdata('journal_component');
+__PACKAGE__->mk_classdata('journal_components');
 __PACKAGE__->mk_classdata('journal_nested_changesets');
 
 use strict;
@@ -29,9 +30,13 @@ sub _journal_schema_prototype {
     my $c = blessed($self)||$self;
     my $journal_schema_class = "${c}::_JOURNAL";
     Class::C3::Componentised->inject_base($journal_schema_class, 'DBIx::Class::Schema::Journal::DB');
+    $journal_schema_class->load_components($self->journal_components)
+        if $self->journal_components;
     my $proto = $self->__journal_schema_prototype (
         $journal_schema_class->compose_namespace( $c.'::Journal')
     );
+
+
     my $comp = $self->journal_component || "Journal";
 
     ## Create auditlog+history per table
