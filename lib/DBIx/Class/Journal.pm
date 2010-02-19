@@ -171,6 +171,12 @@ Leaving this blank assumes you want to store the audit data into your current
 database. The storage object will be shared by the regular schema and the
 journalling schema.
 
+=item journal_components @components
+
+If you want to add components to your journal
+(L<DBIx::Class::Schema::Versioned> for example) this would be the
+
+
 =item journal_sources \@source_names
 
 Set a list of source names you would like to audit, if unset, all
