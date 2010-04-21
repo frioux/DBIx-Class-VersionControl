@@ -3,7 +3,7 @@ package DBIx::Class::Schema::Journal::DB::AuditHistory;
 use base 'DBIx::Class::Core';
 
 sub journal_define_table {
-    my ( $class, $source ) = @_;
+    my ( $class, $source, $schema_class ) = @_;
 
     $class->table($source->name . '_audit_history');
 
@@ -40,7 +40,7 @@ sub journal_define_table {
         $class->add_column($column => \%hist_info);
     }
 
-    $class->belongs_to(change => 'DBIx::Class::Schema::Journal::DB::ChangeLog', 'audit_change_id');
+    $class->belongs_to(change => "${schema_class}::ChangeLog", 'audit_change_id');
 }
 
 1;

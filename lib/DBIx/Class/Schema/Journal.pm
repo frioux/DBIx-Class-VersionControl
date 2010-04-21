@@ -17,6 +17,7 @@ __PACKAGE__->mk_classdata('_journal_schema'); ## schema object for journal
 __PACKAGE__->mk_classdata('journal_component');
 __PACKAGE__->mk_classdata('journal_components');
 __PACKAGE__->mk_classdata('journal_nested_changesets');
+__PACKAGE__->mk_classdata('journal_prefix');
 
 use strict;
 use warnings;
@@ -38,6 +39,20 @@ sub _journal_schema_prototype {
 
 
     my $comp = $self->journal_component || "Journal";
+    
+    my $prefix = $self->journal_prefix || '';
+    foreach my $audit (qw(ChangeSet ChangeLog)) {
+        my $class = blessed($proto) . "::$audit";
+
+        Class::C3::Componentised->inject_base($class, "DBIx::Class::Schema::Journal::DB::$audit");
+
+        $class->journal_define_table(blessed($proto), $prefix);
+
+        $proto->register_class($audit, $class);
+
+        $self->register_class($audit, $class)
+            if $self->journal_copy_sources;
+    }
 
     ## Create auditlog+history per table
     my %j_sources = map { $_ => 1 } $self->journal_sources
@@ -114,7 +129,7 @@ sub create_journal_for {
 
         Class::C3::Componentised->inject_base($class, "DBIx::Class::Schema::Journal::DB::$audit");
 
-        $class->journal_define_table($source);
+        $class->journal_define_table($source, blessed($journal_schema));
 
         $journal_schema->register_class($audit_source, $class);
 
@@ -174,6 +189,5 @@ sub changeset_session {
 
     $self->_journal_schema->current_session($sessionid);
 }
-
 
 1;
