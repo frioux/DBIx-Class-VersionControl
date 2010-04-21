@@ -69,9 +69,9 @@ sub journal_log_update {
     if($self->in_storage) {
         my $j = $self->_journal_schema;
 
-        my $change = $j->journal_create_change;
+        my $change_id = $j->journal_create_change->id;
         my $prev = $self->result_source->resultset->find( $self->ident_condition );
-        $j->journal_record_in_history( $prev, audit_change_id => $change );
+        $j->journal_record_in_history( $prev, audit_change_id => $change_id );
     }
 }
 
