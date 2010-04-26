@@ -77,6 +77,8 @@ DBIx::Class::Journal - Auditing for tables managed by DBIx::Class
 
 =head1 SYNOPSIS
 
+Load the module into your L<DBIx::Class> Schema Class:
+
  package My::Schema;
  use base 'DBIx::Class::Schema';
 
@@ -106,26 +108,26 @@ create/update/delete operation an I<id>. The creation and deletion date of
 each row is stored, as well as the historical contents of any row that gets
 changed.
 
-All queries which need auditing must be called using
+All queries which need auditing B<must> be called using
 L<DBIx::Class::Schema/txn_do>, which is used to create changesets for each
 transaction.
 
 To track who did which changes, the C<user_id> (an integer) of the current
-user can be set, and a C<session_id> can also be set; both are optional.
-
-To access the auditing schema to look at the auditdata or revert a change, use
+user can be set, and a C<session_id> can also be set; both are optional. To
+access the auditing schema to look at the auditdata or revert a change, use
 C<< $schema->_journal_schema >>.
 
 =head1 DEPLOYMENT
 
 Currently the module expects to be deployed alongside a new database schema,
-and track all changes from first entry. Do do that you need to add some tables
-for the journal, and you can configure which tables have their operations
-journalled by the module.
+and track all changes from first entry. To do that you need to create some
+tables in which to store the journal, and you can opitonally configure which
+data sources (tables) have their operations journalled by the module.
 
 Connect to your schema and deploy the journal tables as below. The module
 automatically scans your schema and sets up storage for journal entries.
 
+ # optional - defaults to all sources
  My::Schema->journal_sources([qw/ table1 table2 /]);
  
  $schema = My::Schema->connect(...);
@@ -134,6 +136,10 @@ automatically scans your schema and sets up storage for journal entries.
 Note that if you are retrofitting journalling to an existing database, then as
 well as creating the journal you will need to populate it with a history so
 that when rows are deleted they can be mapped back to a (fake) creation.
+
+If you ever update your original schema, remember that you must then also
+update the journal's schema to match, so that the AuditHistory has the
+corresponding new columns in which to save data.
 
 =head1 TABLES
 
