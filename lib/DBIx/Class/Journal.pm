@@ -8,7 +8,7 @@ use warnings;
 our $VERSION = '0.900001_04';
 $VERSION = eval $VERSION; # no errors in dev versions
 
-## On create/insert, add new entry to AuditLog
+## On create/insert, add new entry to AuditLog and new content to AuditHistory
 
 sub _journal_schema {
     my $self = shift;
@@ -17,11 +17,9 @@ sub _journal_schema {
 
 sub insert {
     my ($self, @args) = @_;
-
     return if $self->in_storage;
 
     my $res = $self->next::method(@args);
-
     $self->journal_log_insert;
 
     return $res;
@@ -55,12 +53,12 @@ sub journal_log_delete {
     }
 }
 
-## On update, copy previous row's contents to AuditHistory
+## On update, copy row's new contents to AuditHistory
 
 sub update {
     my $self = shift;
-    $self->journal_log_update(@_);
     $self->next::method(@_);
+    $self->journal_log_update(@_);
 }
 
 sub journal_log_update {
