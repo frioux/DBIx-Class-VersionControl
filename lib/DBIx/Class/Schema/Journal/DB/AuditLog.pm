@@ -7,6 +7,10 @@ sub journal_define_table {
 
     $class->table($source->name . '_audit_log');
 
+    # the create_id is the id of first insertion of the row
+    # so we always know where to roll back to
+    # and presumably should be supplied on every insert
+
     $class->add_columns(
         create_id => {
             data_type => 'integer',
