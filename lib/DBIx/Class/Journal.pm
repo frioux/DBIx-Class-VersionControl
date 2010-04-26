@@ -64,12 +64,10 @@ sub update {
 sub journal_log_update {
     my $self = shift;
 
-    if($self->in_storage) {
+    if ($self->in_storage) {
         my $j = $self->_journal_schema;
-
         my $change_id = $j->journal_create_change->id;
-        my $prev = $self->result_source->resultset->find( $self->ident_condition );
-        $j->journal_record_in_history( $prev, audit_change_id => $change_id );
+        $j->journal_record_in_history( $self, audit_change_id => $change_id );
     }
 }
 
