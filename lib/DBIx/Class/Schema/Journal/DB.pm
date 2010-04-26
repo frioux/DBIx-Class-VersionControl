@@ -38,7 +38,7 @@ sub current_changeset {
 sub journal_create_changeset {
     my ( $self, @args ) = @_;
 
-    my %changesetdata = ( @args, ID => undef );
+    my %changesetdata = ( @args );
 
     delete $changesetdata{parent_id} unless $self->nested_changesets;
 
