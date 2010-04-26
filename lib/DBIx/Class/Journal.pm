@@ -73,7 +73,7 @@ sub journal_log_update {
 
 =head1 NAME
 
-DBIx::Class::Journal - auditing for tables managed by DBIx::Class
+DBIx::Class::Journal - Auditing for tables managed by DBIx::Class
 
 =head1 SYNOPSIS
 
@@ -81,6 +81,12 @@ DBIx::Class::Journal - auditing for tables managed by DBIx::Class
  use base 'DBIx::Class::Schema';
 
  __PACKAGE__->load_components(qw/Schema::Journal/);
+
+And then call C<< $schema->journal_schema_deploy >> to create all the tables
+necessary for the journal, in your database.
+
+Optionally set where the journal is stored, and associate a user ID with
+each changeset.
 
  __PACKAGE__->journal_connection(['dbi:SQLite:t/var/Audit.db']);
  __PACKAGE__->journal_user(['My::Schema::User', {'foreign.userid' => 'self.user_id'}]);
@@ -170,8 +176,7 @@ journalling schema.
 =item journal_components @components
 
 If you want to add components to your journal
-(L<DBIx::Class::Schema::Versioned> for example) this would be the
-
+(L<DBIx::Class::Schema::Versioned> for example) pass them here.
 
 =item journal_sources \@source_names
 
@@ -192,12 +197,17 @@ The user_id column in the L</ChangeSet> will be linked to your user id
 with a belongs_to relation, if this is set with the appropriate
 arguments.
 
+=item journal_schema_deploy
+
+Will use L<DBIx::Class::Schema/deploy> to set up the tables for
+journalling in your schema. Use this method to set up your journal.
+
 =item journal_deploy_on_connect $bool
 
 If set to a true value will cause C<journal_schema_deploy> to be called on
 C<connect>.
 
-Not reccomended, but present for backwards compatibility.
+Not recommended, but present for backwards compatibility.
 
 =item changeset_user $user_id
 
@@ -206,6 +216,11 @@ Set the user_id for the following changeset(s). This must be an integer.
 =item changeset_session $session_id
 
 Set the session_id for the following changeset(s). This must be an integer.
+
+=item deploy
+
+Overloaded L<DBIx::Class::Schema/deploy> which will deploy your primary
+database schema and following that will deploy the journal schema.
 
 =item txn_do $code_ref, @args
 
