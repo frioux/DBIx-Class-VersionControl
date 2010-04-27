@@ -1,3 +1,9 @@
+0.900001_04 2010-04-27
+    - Lots of documentation tweaks (oliver)
+    - Fix a bug caused by storing state of row BEFORE update instead of after (oliver)
+    - RT56175: allow tables to have a prefix
+    - RT56179: insert change_id, not change object, into audit log
+
 0.900001_03 2010-02-18
     - Journal schema is now in it's own virtual package instead of being in
       DBIx::Class::Schema::Journal::DB so a user should be able to have
