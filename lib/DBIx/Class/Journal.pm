@@ -256,6 +256,19 @@ C<connect>.
 
 Not recommended, but present for backwards compatibility.
 
+=item prepopulate_journal
+
+Will load the current state of your original source tables into the audit
+history as fake inserts in a single initial changeset. The advantage to this
+is that later deletetions of the row will be consistent in the journal with an
+initial state.
+
+Note that this can be an intensive and time consuming task, depending on how
+much data you have in your original sources; all of it will be copied to the
+journal history. However this step is essential if you are retrofitting
+Journalling to a schema with existing data, otherwise when you delete a row
+the Journal will die because it cannot relate that to an initial row insert.
+
 =item changeset_user $user_id
 
 Set the C<user_id> for the following changeset(s). This must be an integer.

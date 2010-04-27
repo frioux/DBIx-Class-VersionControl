@@ -138,6 +138,61 @@ sub create_journal_for {
     }
 }
 
+sub prepopulate_journal {
+    my $self = shift;
+
+    my %j_sources = map { $_ => 1 } $self->journal_sources
+       ? @{$self->journal_sources}
+       : $self->sources;
+
+    my $schema = $self;
+    my $j_schema = $self->_journal_schema;
+    my $changelog_rs = $j_schema->resultset('ChangeLog');
+
+    # using our own overridden txn_do (see below) will create a changeset
+    $schema->txn_do( sub {
+        my $chs_id = $j_schema->current_changeset;
+
+        foreach my $s_name ($self->sources) {
+            next unless $j_sources{$s_name};
+
+            my $from_rs = $schema->resultset($s_name);
+            my ($pk) = $from_rs->result_source->primary_columns;
+            $from_rs->result_class('DBIx::Class::ResultClass::HashRefInflator');
+
+            my $to_rs  = $j_schema->resultset("${s_name}AuditHistory");
+            my $log_rs = $j_schema->resultset("${s_name}AuditLog");
+
+            my $page = 1;
+            while (
+                my @x = $from_rs->search(undef, {
+                    rows => 1_000,
+                    page => $page++,
+                })
+            ) {
+                # get some number of change log IDs to be generated for this page
+                my @log_ids = map { $_->id }
+                            $changelog_rs->populate([
+                                map {{ changeset_id => $chs_id }} (0 .. $#x)
+                            ]);
+
+                # create the audit log entries for the rows in this page
+                $log_rs->populate([
+                    map {{ create_id => $log_ids[$_], id => $x[$_]->{$pk} }} (0 .. $#x)
+                ]);
+
+                # now populate the audit history
+                $to_rs->populate([
+                    map +{
+                        %{$x[$_]},
+                        audit_change_id => $log_ids[$_],
+                    }, (0 .. $#x)
+                ]);
+            }
+        }
+    });
+}
+
 sub txn_do {
     my ($self, $user_code, @args) = @_;
 
