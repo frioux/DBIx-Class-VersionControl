@@ -138,19 +138,30 @@ sub create_journal_for {
     }
 }
 
+# XXX FIXME deploy is not idempotenta :-(
+sub bootstrap_journal {
+    my $self = shift;
+    $self->journal_schema_deploy;
+    $self->prepopulate_journal;
+}
+
+# copy data from original schema sources into the journal as inserts in one
+# changeset, so that later deletes will not fail to be journalled.
 sub prepopulate_journal {
     my $self = shift;
-
-    my %j_sources = map { $_ => 1 } $self->journal_sources
-       ? @{$self->journal_sources}
-       : $self->sources;
-
     my $schema = $self;
-    my $j_schema = $self->_journal_schema;
-    my $changelog_rs = $j_schema->resultset('ChangeLog');
+
+    # woah, looks like prepopulate has already run?
+    return if $schema->_journal_schema->resultset('ChangeSet')->count != 0;
 
     # using our own overridden txn_do (see below) will create a changeset
     $schema->txn_do( sub {
+        my %j_sources = map { $_ => 1 } $self->journal_sources
+        ? @{$self->journal_sources}
+        : $self->sources;
+
+        my $j_schema = $self->_journal_schema;
+        my $changelog_rs = $j_schema->resultset('ChangeLog');
         my $chs_id = $j_schema->current_changeset;
 
         foreach my $s_name ($self->sources) {

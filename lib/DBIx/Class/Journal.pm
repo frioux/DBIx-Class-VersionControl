@@ -84,7 +84,7 @@ Load the module into your L<DBIx::Class> Schema Class:
 
  __PACKAGE__->load_components(qw/Schema::Journal/);
 
-And then call C<< $schema->journal_schema_deploy >> to create all the tables
+And then call C<< $schema->bootstrap_journal >> to create all the tables
 necessary for the journal, in your database.
 
 Optionally set where the journal is stored:
@@ -239,6 +239,12 @@ Once you have a connection to your database, call these methods to manage the
 journalling.
 
 =over 4
+
+=item bootstrap_journal
+
+This calls C<journal_schema_deploy> followed by C<prepopulate_journal> to
+create your journal tables and if necessary populate them with a snapshot of
+your current original schema data.
 
 =item journal_schema_deploy
 
