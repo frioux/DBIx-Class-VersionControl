@@ -84,8 +84,8 @@ Load the module into your L<DBIx::Class> Schema Class:
 
  __PACKAGE__->load_components(qw/Schema::Journal/);
 
-And then call C<< $schema->bootstrap_journal >> to create all the tables
-necessary for the journal, in your database.
+And then call C<< $schema->bootstrap_journal >> (I<once only>) to create all
+the tables necessary for the journal, in your database.
 
 Optionally set where the journal is stored:
 
@@ -246,6 +246,9 @@ This calls C<journal_schema_deploy> followed by C<prepopulate_journal> to
 create your journal tables and if necessary populate them with a snapshot of
 your current original schema data.
 
+Do not run this method more than once on your database, as redeploying the
+journal schema is not supported.
+
 =item journal_schema_deploy
 
 Will use L<DBIx::Class::Schema/deploy> to set up the tables for journalling in
@@ -255,12 +258,8 @@ Note that if you are retrofitting journalling to an existing database, then as
 well as creating the journal you will need to populate it with a history so
 that when rows are deleted they can be mapped back to a (fake) creation.
 
-=item journal_deploy_on_connect $bool
-
-If set to a true value will cause C<journal_schema_deploy> to be called on
-C<connect>.
-
-Not recommended, but present for backwards compatibility.
+Do not run this method more than once on your database, as redeploying the
+journal schema is not supported.
 
 =item prepopulate_journal
 
@@ -297,6 +296,24 @@ table will use the C<changeset_id> created in the most recent C<txn_do> call.
 Currently nested C<txn_do> calls cause a single ChangeSet object to be created.
 
 =back
+
+=head2 Deprecated Methods
+
+=over 4
+
+=item journal_deploy_on_connect $bool
+
+If set to a true value will cause C<journal_schema_deploy> to be called on
+C<connect>. Not recommended (because re-deploy of a schema is not supported),
+but present for backwards compatibility.
+
+=back
+
+=head1 TROUBLESHOOTING
+
+For PostgreSQL databases you must enable quoting on SQL command generation by
+passing C<< { quote_char => q{`}, name_sep => q{.} } >> when connecting to the
+database.
 
 =head1 SEE ALSO
 
