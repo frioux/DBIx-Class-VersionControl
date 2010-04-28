@@ -46,7 +46,7 @@ $schema->journal_schema_deploy();
 $count = eval { $schema->_journal_schema->resultset('ChangeLog')->count };
 
 is( $@, '', "no error" );
-is( $count, 0, "count is 0 (chagnelog)" );
+is( $count, 0, "count is 0 (changelog)" );
 
 # run populate
 $schema->prepopulate_journal();
@@ -93,7 +93,7 @@ $count = eval {
             delete_id => { '-not' => undef }
         })->count;
 };
-    
+
 is( $@, '', "no error" );
 is( $count, 1, "count is 1 (delete_id)" );
 
