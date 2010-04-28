@@ -39,7 +39,7 @@ sub _journal_schema_prototype {
 
 
     my $comp = $self->journal_component || "Journal";
-    
+
     my $prefix = $self->journal_prefix || '';
     foreach my $audit (qw(ChangeSet ChangeLog)) {
         my $class = blessed($proto) . "::$audit";
@@ -102,14 +102,6 @@ sub connection {
     $self->_journal_schema->storage->disconnect();
 
     return $schema;
-}
-
-sub deploy {
-    my $self = shift;
-
-    $self->next::method(@_);
-
-    $self->journal_schema_deploy(@_);
 }
 
 sub journal_schema_deploy {
