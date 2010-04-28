@@ -6,7 +6,7 @@ BEGIN {
     eval "use DBD::SQLite; use SQL::Translator";
     plan $@
         ? ( skip_all => 'needs DBD::SQLite and SQL::Translator for testing' )
-        : ( tests => 21 );
+        : ( tests => 17 );
 }
 
 use lib qw(t/lib);
@@ -14,9 +14,9 @@ use DBICTest;
 
 # connect to db and deploy only the original db schema, not journal schema
 my $schema = DBICTest->init_schema(no_populate => 1, no_deploy => 1);
-$schema->deploy;
 
 ok($schema, 'Created a Schema');
+$schema->deploy;
 
 # check we have no journal
 my $count = eval {

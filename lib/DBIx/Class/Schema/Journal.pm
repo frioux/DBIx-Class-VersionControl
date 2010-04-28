@@ -181,7 +181,7 @@ sub prepopulate_journal {
 
                 # create the audit log entries for the rows in this page
                 $log_rs->populate([
-                    map {{ create_id => $log_ids[$_], id => $x[$_]->{$pk} }} (0 .. $#x)
+                    map {{ create_id => $log_ids[$_], $pk => $x[$_]->{$pk} }} (0 .. $#x)
                 ]);
 
                 # now populate the audit history
