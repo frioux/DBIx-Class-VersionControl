@@ -138,7 +138,7 @@ sub create_journal_for {
     }
 }
 
-# XXX FIXME deploy is not idempotenta :-(
+# XXX FIXME deploy is not idempotent :-(
 sub bootstrap_journal {
     my $self = shift;
     $self->journal_schema_deploy;
