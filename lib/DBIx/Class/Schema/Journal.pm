@@ -160,7 +160,7 @@ sub prepopulate_journal {
             next unless $j_sources{$s_name};
 
             my $from_rs = $schema->resultset($s_name);
-            my ($pk) = $from_rs->result_source->primary_columns;
+            my @pks = $from_rs->result_source->primary_columns;
             $from_rs->result_class('DBIx::Class::ResultClass::HashRefInflator');
 
             my $to_rs  = $j_schema->resultset("${s_name}AuditHistory");
@@ -174,15 +174,21 @@ sub prepopulate_journal {
                 })
             ) {
                 # get some number of change log IDs to be generated for this page
-                my @log_ids = map { $_->id }
-                            $changelog_rs->populate([
-                                map {{ changeset_id => $chs_id }} (0 .. $#x)
-                            ]);
+                my @log_ids = map $_->id,
+                   $changelog_rs->populate([
+                       map +{ changeset_id => $chs_id }, (0 .. $#x)
+                   ]);
 
+
+                my @datas;
+                for my $idx (0 .. $#x ) {
+                   push @datas, {
+                       create_id => $log_ids[$idx],
+                       map { $_ => $x[$idx]->{$_} } @pks,
+                   }
+                }
                 # create the audit log entries for the rows in this page
-                $log_rs->populate([
-                    map {{ create_id => $log_ids[$_], $pk => $x[$_]->{$pk} }} (0 .. $#x)
-                ]);
+                $log_rs->populate([@datas]);
 
                 # now populate the audit history
                 $to_rs->populate([
