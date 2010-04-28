@@ -1,3 +1,7 @@
+0.900001_05 2010-04-28
+    - Added prepopulate_journal() to bootstrap insert logs, for retrofitting (oliver)
+    - Added bootstrap_journal() which calls deploy_journal() and then prepopulate_journal() (oliver)
+
 0.900001_04 2010-04-27
     - Lots of documentation tweaks (oliver)
     - Fix a bug caused by storing state of row BEFORE update instead of after (oliver)
