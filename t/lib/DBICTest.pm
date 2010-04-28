@@ -124,7 +124,8 @@ sub deploy_schema {
     my $self = shift;
     my $schema = shift;
 
-	 return $schema->deploy();
+    $schema->journal_schema_deploy();
+    return $schema->deploy();
 }
 
 =head2 populate_schema
