@@ -1,4 +1,5 @@
-0.900001_05 2010-04-28
+0.900001_05 2010-04-29
+    - Removed undocumented override of deploy()
     - Added prepopulate_journal() to bootstrap insert logs, for retrofitting (oliver)
     - Added bootstrap_journal() which calls deploy_journal() and then prepopulate_journal() (oliver)
 

@@ -5,7 +5,7 @@ use base qw/DBIx::Class/;
 use strict;
 use warnings;
 
-our $VERSION = '0.900001_04';
+our $VERSION = '0.900001_05';
 $VERSION = eval $VERSION; # no errors in dev versions
 
 ## On create/insert, add new entry to AuditLog and new content to AuditHistory
@@ -129,7 +129,7 @@ automatically scans your schema and sets up storage for journal entries.
 
  # optional - defaults to all sources
  My::Schema->journal_sources([qw/ table1 table2 /]);
- 
+
  $schema = My::Schema->connect(...);
  $schema->journal_schema_deploy;
 
