@@ -5,7 +5,7 @@ use base qw/DBIx::Class/;
 use strict;
 use warnings;
 
-our $VERSION = '0.900001_05';
+our $VERSION = '0.900001_06';
 $VERSION = eval $VERSION; # no errors in dev versions
 
 ## On create/insert, add new entry to AuditLog and new content to AuditHistory
@@ -40,8 +40,9 @@ sub journal_log_insert {
 
 sub delete {
     my $self = shift;
-    $self->next::method(@_);
+    my $ret = $self->next::method(@_);
     $self->journal_log_delete(@_);
+    return $ret
 }
 
 sub journal_log_delete {
@@ -57,8 +58,9 @@ sub journal_log_delete {
 
 sub update {
     my $self = shift;
-    $self->next::method(@_);
+    my $ret = $self->next::method(@_);
     $self->journal_log_update(@_);
+    return $ret
 }
 
 sub journal_log_update {

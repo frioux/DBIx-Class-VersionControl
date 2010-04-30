@@ -1,3 +1,6 @@
+0.900001_06 2010-04-30
+    - Fixed silly bug where update and delete didn't return what they were supposed to
+
 0.900001_05 2010-04-29
     - Removed undocumented override of deploy()
     - Added prepopulate_journal() to bootstrap insert logs, for retrofitting (oliver)
