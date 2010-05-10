@@ -86,12 +86,12 @@ Load the module into your L<DBIx::Class> Schema Class:
 
  __PACKAGE__->load_components(qw/Schema::Journal/);
 
-And then call C<< $schema->bootstrap_journal >> (I<once only>) to create all
-the tables necessary for the journal, in your database.
-
 Optionally set where the journal is stored:
 
  __PACKAGE__->journal_connection(['dbi:SQLite:t/var/Audit.db']);
+
+And then call C<< $schema->bootstrap_journal >> (I<once only>) to create all
+the tables necessary for the journal, in your database.
 
 Later on, in your application, wrap operations in transactions, and optionally
 associate a user with the changeset:
@@ -334,6 +334,11 @@ L<DBIx::Class> - You'll need it to use this.
 =item *
 
 Only single-column integer primary key'd tables are supported for auditing.
+
+=item *
+
+Rows changed as a result of C<CASCADE> settings on your database will not be
+detected by the module and hence not journalled.
 
 =item *
 
