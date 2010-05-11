@@ -1,3 +1,6 @@
+0.900100 2010-05-11
+    - Tiny bit of doc, besides that it's all of the below.
+
 0.900001_06 2010-04-30
     - Fixed silly bug where update and delete didn't return what they were supposed to
 
