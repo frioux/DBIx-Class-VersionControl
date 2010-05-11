@@ -22,6 +22,7 @@ __PACKAGE__->mk_classdata('journal_prefix');
 use strict;
 use warnings;
 
+our $VERSION = '0.01';
 
 sub _journal_schema_prototype {
     my $self = shift;
