@@ -5,7 +5,7 @@ use base qw/DBIx::Class/;
 use strict;
 use warnings;
 
-our $VERSION = '0.900100';
+our $VERSION = '0.900101';
 $VERSION = eval $VERSION; # no errors in dev versions
 
 ## On create/insert, add new entry to AuditLog and new content to AuditHistory
