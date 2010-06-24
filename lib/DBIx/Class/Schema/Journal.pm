@@ -172,6 +172,7 @@ sub prepopulate_journal {
                 my @x = $from_rs->search(undef, {
                     rows => 1_000,
                     page => $page++,
+                    result_class => 'DBIx::Class::ResultClass::HashRefInflator',
                 })
             ) {
                 # get some number of change log IDs to be generated for this page
