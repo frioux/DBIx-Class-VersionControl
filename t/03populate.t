@@ -6,7 +6,7 @@ BEGIN {
     eval "use DBD::SQLite; use SQL::Translator";
     plan $@
         ? ( skip_all => 'needs DBD::SQLite and SQL::Translator for testing' )
-        : ( tests => 17 );
+        : ( tests => 11 );
 }
 
 use lib qw(t/lib);
@@ -28,16 +28,13 @@ is( $count, undef, 'no count' );
 like( $e, qr/table.*changelog/, 'missing table error' );
 
 # insert two rows -not- in txn
-my ($artistA, $artistB);
-#$schema->txn_do(sub {
-    $artistA = $schema->resultset('Artist')->create({
-        name => 'Fred Bloggs A',
-    });
-
-    $artistB = $schema->resultset('Artist')->create({
-        name => 'Fred Bloggs B',
-    });
-#});
+$schema->storage->dbh_do(sub {
+   my $dbh = $_[1];
+   $dbh->do($_) for (
+     "INSERT INTO artist ( name ) VALUES ('Fred Bloggs A' )",
+     "INSERT INTO artist ( name ) VALUES ('Fred Bloggs B' )"
+   );
+});
 
 # create the journal
 $schema->journal_schema_deploy();
@@ -68,32 +65,4 @@ $count = eval { $schema->_journal_schema->resultset('ArtistAuditLog')->count };
 
 is( $@, '', "no error" );
 is( $count, 2, "count is 2 (auditlog)" );
-
-# now delete a row
-eval {
-    my $deleted = $schema->txn_do(sub {
-        $artistA->delete;
-    });
-};
-
-is( $@, '', "no error from deletion journal (create_id not null)" );
-is( $artistA->in_storage, 0, "row was deleted" );
-
-# check journal log still has two rows
-$count = eval { $schema->_journal_schema->resultset('ArtistAuditLog')->count };
-
-is( $@, '', "no error" );
-is( $count, 2, "count is 2 (auditlog 2)" );
-
-# and that one of them has a delete_id
-$count = eval {
-    $schema->_journal_schema->resultset('ArtistAuditLog')
-        ->search({
-            artistid => $artistA->id,
-            delete_id => { '-not' => undef }
-        })->count;
-};
-
-is( $@, '', "no error" );
-is( $count, 1, "count is 1 (delete_id)" );
 
