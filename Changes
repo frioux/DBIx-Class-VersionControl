@@ -1,3 +1,6 @@
+0.900102 2010-06-23
+    - Fix a bad test and a silly assumption in population code
+
 0.900101 2010-05-11
     - Reupload because of a missing version number
 
