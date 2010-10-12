@@ -1,3 +1,6 @@
+    - Don't copy column data from schema that does anything other
+      than define data type.  e.g. autoinc stuff
+
 0.900200 2010-07-24
     - No longer use 'scalar gmtime' for set_date in ChangeSet;
       that was brittle and doesn't work on many databases, now

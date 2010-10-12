@@ -25,7 +25,15 @@ sub journal_define_table {
     );
 
     foreach my $column ( $source->primary_columns ) {
-        $class->add_column( $column => { %{ $source->column_info($column) } } );
+        my %column_info = %{$source->column_info($column)};
+        delete $column_info{$_} for qw(
+           is_autoincrement
+           is_foreign_key
+           default_value
+           sequence
+           auto_nextval
+        );
+        $class->add_column( $column => \%column_info );
     }
 
     $class->set_primary_key( $source->primary_columns );
