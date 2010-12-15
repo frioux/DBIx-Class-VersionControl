@@ -44,7 +44,7 @@ is $v_schema->resultset('Band')->count, 1;
 # { id => 1, name => Marillion, headliner_id => 1, headliner_version => 1, version => 1 },
 
 # first era
-$marillion->add_to_cds($_) for (
+$marillion->add_to_albums($_) for (
    { name => q(Script for a Jester's Tear) },
    { name => 'Misplaced Childhood' },
    { name => 'Clutching at Straws' },
@@ -91,7 +91,7 @@ is $v_schema->resultset('Album')->count, 6; # albums got copied
 # { id => 3, name => Clutching at Straws, band_id => 1, band_version => 2, version => 2 }
 
 # second era
-$marillion->add_to_cds($_) for (
+$marillion->add_to_albums($_) for (
    { name => 'Seasons End' },
    { name => 'Holidays in Eden' },
    { name => 'Brave' },
